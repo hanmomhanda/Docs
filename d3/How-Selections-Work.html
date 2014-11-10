@@ -917,7 +917,7 @@ tree(
 
 <pre><code>d3.<span id="select-all-1-1">selectAll("tr")</span>.<span id="select-all-1-2">selectAll("td")</span>;</code></pre>
 
-<aside>그림에 나오는 셀렉션의 그룹은 모두 똑같이 네 개의 원소를 가지고 있지만, 일반적으로 셀렉션의 각 그룹은 각기 다른 갯수의 원소를 가질 수 있다. 뿐만아니라 그룹은 심지어 비어있을 수도 있다!</aside>
+<aside>그림에 나오는 셀렉션의 그룹은 모두 똑같이 네 개의 원소를 가지고 있지만, 일반적으로 셀렉션의 각 그룹은 각기 다른 갯수의 원소를 가질 수 있다. 뿐만아니라 그룹은 심지어 비어있을 수도 있다!(역자 주 : 원문에는 똑같이 4개 씩의 td를 가지는 4개의 tr에 대한 그림으로 설명하고 있으나, 4개의 tr과 4개의 td로 인해 잘못된 이해를 유발할 수 있어 여기 설명대로 각 그룹이 각기 다른 갯수의 원소를 가질 수 있음을 보여주기 위해 그림을 수정하였음)</aside>
 
 <script>
 
@@ -933,20 +933,19 @@ selectAllAnimation(
   24 * 4,
   {type: "selection", name: "selection", children: [
     {type: "array", name: "group", children: [
-      {type: "element", name: "td"},
-      {type: "element", name: "td"},
-      {type: "element", name: "td"},
+      {type: "element", name: "td"},            
       {type: "element", name: "td"}
     ]},
     {type: "array", name: "group", children: [
       {type: "element", name: "td"},
       {type: "element", name: "td"},
       {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
       {type: "element", name: "td"}
     ]},
     {type: "array", name: "group", children: [
-      {type: "element", name: "td"},
-      {type: "element", name: "td"},
+      {type: "element", name: "td"},      
       {type: "element", name: "td"},
       {type: "element", name: "td"}
     ]},
@@ -1054,11 +1053,11 @@ selectAllAnimation(
 
 <p>Only selectAll has special behavior regarding grouping; <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a> preserves the existing grouping. The select method differs because there is exactly one element in the new selection for each element in the old selection. Thus, select also propagates data from parent to child, whereas selectAll does not (hence the need for a data-join)!
 
-<p>그룹핑(역자 주 : 그룹은 셀렉션의 최말단 요소를 원소로 하는 배열을 말하며, 이 글에서 그룹핑은 그룹의 parentNode 속성을 말한다)에 관해서는 selectAll만 특이하게 동작한다(역자 주 : selectAll만 원래의 셀렉션에 있는 그룹 배열의 parentNode 속성을 변경한다); <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a>는 원래의 셀렉션에 있는 그룹핑을 변경하지 않고 그대로 보존한다. select 메서드는 원래의 셀렉션의 최말단 요소 각각에 대해 단 하나씩의 요소만을 원소로 취하는 단 하나의 그룹 배열을 반환하기 때문에 selectAll과 다르게 동작한다. select는 원래 셀렉션의 데이터를 새로운 셀렉션에 물려주지만, selectAll은 물려주지 않는다(그래서 데이터-조인이 필요하다!).
+<p>그룹핑(역자 주 : 그룹은 셀렉션의 최말단 요소를 원소로 하는 배열을 말하며, 이 글에서 그룹핑은 그룹 배열의 원소 개수와 그룹 배열의 parentNode 속성을 말한다)에 관해서는 selectAll만 특이하게 동작한다(역자 주 : selectAll만 원래의 셀렉션에 있는 그룹 배열의 parentNode 속성을 변경한다); <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a>는 원래의 셀렉션에 있는 그룹핑을 변경하지 않고 그대로 보존한다. select 메서드는 원래의 셀렉션의 최말단 요소 각각에 대해 단 하나씩의 요소만을 원소로 취하는 단 하나의 그룹 배열을 반환하기 때문에 selectAll과 다르게 동작한다. select는 원래 셀렉션의 데이터를 새로운 셀렉션에 물려주지만, selectAll은 물려주지 않는다(그래서 데이터-조인이 필요하다!).
 
 <p>The <a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> and <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> methods are wrappers on top of select, so they also preserve grouping and propagate data. For example, given a document with four sections:
 
-<p><a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> 메서드와 <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> 메서드는 select 메서드를 랩핑한 메서드로서, select 메서드와 마찬가지로 그룹핑을 그대로 보존하고 원래의 셀렉션에 있던 데이터를 새로운 셀렉션에 물려준다. 예를 들어, 4개의 secion이 있는 문서의 경우:
+<p><a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> 메서드와 <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> 메서드는 select 메서드를 랩핑한 메서드로서, select 메서드와 마찬가지로 그룹핑을 그대로 보존하고 원래의 셀렉션에 있던 데이터를 새로운 셀렉션에 물려준다. 예를 들어, 4개의 section이 있는 문서의 경우:
 
 <pre><code>d3.selectAll("section");</code></pre>
 
@@ -1112,7 +1111,7 @@ tree(
 
 <p>Null elements can occur when selection.select cannot find a matching element for the given selector. The select method must preserve the grouping structure, so it fills the missing slots with null. For example, if only the last two sections have asides:
 
-<p>null 요소는 selection.select 메서드가 해당 셀렉터에 매칭되는 요소를 찾을 수 없을 때 발생할 수 있다. select 메서드는 그룹핑 구조를 그대로 보존해야 하므로, 매칭되는 짝이 없는 곳은 null로 채운다. 예를 들어, 앞의 예제에서 4개의 secion 중에서 두 개만 asice 를 가지고 있다면:
+<p>null 요소는 selection.select 메서드가 해당 셀렉터에 매칭되는 요소를 찾을 수 없을 때 발생할 수 있다. select 메서드는 그룹핑 구조를 그대로 보존해야 하므로, 매칭되는 짝이 없는 곳은 null로 채운다. 예를 들어, 앞의 예제에서 4개의 section 중에서 두 개만 asice 를 가지고 있다면:
 
 <pre><code>d3.selectAll("section").select("aside");</code></pre>
 
