@@ -1050,11 +1050,15 @@ selectAllAnimation(
 
 <!-- The killer feature for groups is <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>, which allows you to define data per-group (rather than for the entire selection), and thus more easily create hierarchical DOM elements from hierarchical data. We’ll revisit this topic when we get to data joins. -->
 
-<h2><a href="#non-grouping" name="non-grouping">#</a>Non-Grouping Operations</h2>
+<h2><a href="#non-grouping" name="non-grouping">#</a>그룹핑을 변경하지 않는 메서드들</h2>
 
 <p>Only selectAll has special behavior regarding grouping; <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a> preserves the existing grouping. The select method differs because there is exactly one element in the new selection for each element in the old selection. Thus, select also propagates data from parent to child, whereas selectAll does not (hence the need for a data-join)!
 
+<p>그룹핑(역자 주 : 그룹은 셀렉션의 최말단 요소를 원소로 하는 배열을 말하며, 이 글에서 그룹핑은 그룹의 parentNode 속성을 말한다)에 관해서는 selectAll만 특이하게 동작한다(역자 주 : selectAll만 원래의 셀렉션에 있는 그룹 배열의 parentNode 속성을 변경한다); <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a>는 원래의 셀렉션에 있는 그룹핑을 변경하지 않고 그대로 보존한다. select 메서드는 원래의 셀렉션의 최말단 요소 각각에 대해 단 하나씩의 요소만을 원소로 취하는 단 하나의 그룹 배열을 반환하기 때문에 selectAll과 다르게 동작한다. select는 원래 셀렉션의 데이터를 새로운 셀렉션에 물려주지만, selectAll은 물려주지 않는다(그래서 데이터-조인이 필요하다!).
+
 <p>The <a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> and <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> methods are wrappers on top of select, so they also preserve grouping and propagate data. For example, given a document with four sections:
+
+<p><a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> 메서드와 <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> 메서드는 select 메서드를 랩핑한 메서드로서, select 메서드와 마찬가지로 그룹핑을 그대로 보존하고 원래의 셀렉션에 있던 데이터를 새로운 셀렉션에 물려준다. 예를 들어, 4개의 secion이 있는 문서의 경우:
 
 <pre><code>d3.selectAll("section");</code></pre>
 
@@ -1076,6 +1080,8 @@ tree(
 
 <p>If you append a paragraph element to each section, the new selection likewise has a single group with four elements:
 
+<p>각 section에 paragraph를 append 하면, append 메서드가 반환하는 새로운 셀렉션은 네 개의 원소를 가지는 한 개의 그룹 배열을 갖게 된다.
+
 <pre><code>d3.selectAll("section").append("p");</code></pre>
 
 <script>
@@ -1096,15 +1102,21 @@ tree(
 
 <p>Note that the <code>parentNode</code> for this selection is still the document element because selection.selectAll has not been called to regroup the selection.
 
-<h2><a href="#null" name="null">#</a>Null Elements</h2>
+<p>위에서 append 메서드가 반환하는 새로운 셀렉션에 있는 그룹의 <code>parentNode</code> 속성은 여전히 document 임을 기억하자. 셀렉션의 그룹핑을 변경하는 selection.selectAll은 호출된 적이 없기 때문이다.
+
+<h2><a href="#null" name="null">#</a>Null 요소</h2>
 
 <p>Groups can contain nulls to indicate missing elements. Nulls are ignored for most operations; for example, D3 skips null elements when applying styles and attributes.
 
+<p>그룹은 요소가 없는 상태를 나타내기 위해 null을 포함할 수 있다. null은 대부분의 처리에서 무시된다; 예를 들어, D3는 스타일이나 속성값을 적용할 때 null 요소는 무시하고 지나가 버린다.
+
 <p>Null elements can occur when selection.select cannot find a matching element for the given selector. The select method must preserve the grouping structure, so it fills the missing slots with null. For example, if only the last two sections have asides:
+
+<p>null 요소는 selection.select 메서드가 해당 셀렉터에 매칭되는 요소를 찾을 수 없을 때 발생할 수 있다. select 메서드는 그룹핑 구조를 그대로 보존해야 하므로, 매칭되는 짝이 없는 곳은 null로 채운다. 예를 들어, 앞의 예제에서 4개의 secion 중에서 두 개만 asice 를 가지고 있다면:
 
 <pre><code>d3.selectAll("section").select("aside");</code></pre>
 
-<aside>Here, selection.node would return <code>selection[0][2]</code>, because this aside is the first non-null element.</aside>
+<aside>여기서 selection.node는 <code>selection[0][2]</code>를 반환한다. selection[0][2]가 null이 아닌 첫 번째 요소이기 때문이다.</aside>
 
 <script>
 
@@ -1123,6 +1135,8 @@ tree(
 </script>
 
 <p>As with grouping, you can usually ignore null elements, but note their use in preserving the grouped structure of a selection and its within-group index.
+
+<p>그룹핑에 대해서는 보통 null 요소를 무시할 수 있지만, 셀렉션의 그룹 구조를 보존하는 데 null 요소가 사용된다는 점과 그룹 내에서의 인덱스에 대해서는 기억을 해두자.
 
 <!-- <p>Null elements are critical when handling the result of a data join, which splits a selection into three parts: <i>enter</i>, <i>update</i> and <i>exit</i>. These three selections share the original selection’s structure, with null elements in-between. -->
 
