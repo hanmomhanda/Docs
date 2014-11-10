@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html class="ocks-org do-not-copy">
+<meta charset="utf-8">
+<title>How Selections Work</title>
+<style>
+
+@import url(http://bost.ocks.org/mike/style.css?aea6f0a);
+@import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
+
+.join,
+.link,
+.node rect {
+  fill: none;
+  stroke: #636363;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #969696;
+}
+
+.node rect {
+  fill: white;
+}
+
+.link path,
+.node rect,
+.node text,
+.join {
+  -webkit-transition: all 500ms linear;
+  -moz-transition: all 500ms linear;
+  -ms-transition: all 500ms linear;
+  -o-transition: all 500ms linear;
+  transition: all 500ms linear;
+}
+
+.node .element rect {
+  fill: #bdbdbd;
+  stroke: none;
+}
+
+.node .null rect {
+  fill: none;
+  stroke: none;
+}
+
+.node .null text {
+  fill: #636363;
+}
+
+.node .selection rect {
+  stroke: #e6550d;
+}
+
+.node .data rect {
+  stroke: #3182bd;
+}
+
+.node .datum rect {
+  fill: #d9d9d9;
+  stroke: none;
+}
+
+.node .code text {
+  font-family: monospace;
+}
+
+.node .key rect {
+  fill: #a1d99b;
+  stroke: none;
+}
+
+.link .to-key,
+.join {
+  stroke: #a1d99b;
+}
+
+.join {
+  stroke-dasharray: 2,2;
+}
+
+.link .to-null {
+  stroke-dasharray: .5,3.5;
+  stroke-linecap: round;
+}
+
+.link .from-data {
+  stroke: #3182bd;
+}
+
+.play circle {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 3px;
+}
+
+.play:hover path {
+  fill: #f00;
+}
+
+.play.mousedown circle {
+  fill: #f00;
+}
+
+.play.mousedown path {
+  fill: #fff;
+}
+
+.play rect {
+  fill: none;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+body {
+    font-family: "Nanum Gothic", sans-serif;
+}
+
+code span {
+  -webkit-transition: background 250ms linear;
+  -moz-transition: background 250ms linear;
+  -ms-transition: background 250ms linear;
+  -o-transition: background 250ms linear;
+  transition: background 250ms linear;
+}
+
+</style>
+
+<header>
+  <aside>April 26, 2013</aside>
+  <a href="../" rel="author">Mike Bostock</a>
+</header>
+
+<h1>셀렉션 작동 원리</h1>
+
+<blockquote>
+  <q>Any sufficiently advanced technology is indistinguishable from magic.</q>
+  –Arthur C. Clarke  
+</blockquote>
+
+<blockquote>
+  <q>충분히 발달한 기술은 마술과 구별이 안된다.</q>
+  –Arthur C. Clarke
+</blockquote>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var numbers = [4, 5, 18, 23, 42];
+
+var letters = [
+  {name: "A", frequency: .08167},
+  {name: "B", frequency: .01492},
+  {name: "C", frequency: .02780},
+  {name: "D", frequency: .04253},
+  {name: "E", frequency: .12702}
+];
+
+var vowels = [
+  {name: "A", frequency: .08167},
+  {name: "E", frequency: .12702},
+  {name: "I", frequency: .06973},
+  {name: "O", frequency: .07507},
+  {name: "U", frequency: .02758}
+];
+
+var matrix = [
+  [ 0,  1,  2,  3],
+  [ 4,  5,  6,  7],
+  [ 8,  9, 10, 11],
+  [12, 13, 14, 15]
+];
+
+function name(d) {
+  return d.name;
+}
+
+var margin = {top: 0, right: 40, bottom: 0, left: 40},
+    width = 720,
+    step = 100;
+
+function tree(leftRoot, rightRoot, outerHeight) {
+  if (arguments.length < 3) outerHeight = rightRoot, rightRoot = null;
+
+  var height = outerHeight - margin.top - margin.bottom;
+
+  var tree = d3.layout.tree()
+      .size([height, 1])
+      .separation(function() { return 1; });
+
+  var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .style("margin", "1em 0 1em " + -margin.left + "px");
+
+  var g = svg.selectAll("g")
+      .data([].concat(
+        leftRoot ? {type: "left", nodes: tree.nodes(leftRoot)} : [],
+        rightRoot ? {type: "right", nodes: tree.nodes(rightRoot).map(flip), flipped: true} : []
+      ))
+    .enter().append("g")
+      .attr("class", function(d) { return d.type; })
+      .attr("transform", function(d) { return "translate(" + (!!d.flipped * width + margin.left) + "," + margin.top + ")"; });
+
+  var link = g.append("g")
+      .attr("class", "link")
+    .selectAll("path")
+      .data(function(d) { return tree.links(d.nodes); })
+    .enter().append("path")
+      .attr("class", linkType);
+
+  var node = g.append("g")
+      .attr("class", "node")
+    .selectAll("g")
+      .data(function(d) { return d.nodes; })
+    .enter().append("g")
+      .attr("class", function(d) { return d.type; });
+
+  node.append("rect");
+
+  node.append("text")
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name; })
+      .each(function(d) { d.width = Math.max(32, this.getComputedTextLength() + 12); })
+      .attr("x", function(d) { return d.flipped ? 6 - d.width : 6; });
+
+  node.filter(function(d) { return "join" in d; }).insert("path", "text")
+      .attr("class", "join");
+
+  svg.call(reset);
+
+  function flip(d) {
+    d.depth *= -1;
+    d.flipped = true;
+    return d;
+  }
+
+  return svg;
+}
+
+function linkType(d) {
+  return d.target.type.split(/\s+/).map(function(t) { return "to-" + t; })
+      .concat(d.source.type.split(/\s+/).map(function(t) { return "from-" + t; }))
+      .join(" ");
+}
+
+function reset(svg) {
+  svg.selectAll("*")
+      .style("stroke-opacity", null)
+      .style("fill-opacity", null)
+      .style("display", null);
+
+  var node = svg.selectAll(".node g")
+      .attr("class", function(d) { return d.type; })
+      .attr("transform", function(d, i) { return "translate(" + d.depth * step + "," + d.x + ")"; });
+
+  node.select("rect")
+      .attr("ry", 6)
+      .attr("rx", 6)
+      .attr("y", -10)
+      .attr("height", 20)
+      .attr("width", function(d) { return d.width; })
+    .filter(function(d) { return d.flipped; })
+      .attr("x", function(d) { return -d.width; });
+
+  node.select(".join")
+      .attr("d", d3.svg.diagonal()
+        .source(function(d) { return {y: d.width, x: 0}; })
+        .target(function(d) { return {y: 88, x: d.join * 24}; })
+        .projection(function(d) { return [d.y, d.x]; }));
+
+  svg.selectAll(".link path")
+      .attr("class", linkType)
+      .attr("d", d3.svg.diagonal()
+        .source(function(d) { return {y: d.source.depth * step + (d.source.flipped ? -1 : +1) * d.source.width, x: d.source.x}; })
+        .target(function(d) { return {y: d.target.depth * step, x: d.target.x}; })
+        .projection(function(d) { return [d.y, d.x]; }));
+}
+
+function selectAllAnimation(startRoot, startHeight, endRoot, endHeight) {
+  var end = tree(endRoot, endHeight).remove(),
+      event = d3.dispatch("start", "middle", "end", "reset"),
+      height = +end.attr("height"),
+      start = tree(startRoot, startHeight).attr("height", height),
+      svg = start.node(),
+      offset = (endHeight - startHeight) / 2,
+      transform = "translate(" + margin.left + "," + offset + ")";
+
+  var play = start.append("g")
+      .attr("class", "play");
+
+  play.append("circle")
+      .attr("r", 45)
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")");
+
+  play.append("path")
+      .attr("d", "M-22,-30l60,30l-60,30z")
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")scale(.7)");
+
+  play.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .on("mousedown", function() {
+        play.classed("mousedown", true);
+        d3.select(window).on("mouseup", function() { play.classed("mousedown", false); });
+      })
+      .on("click", function() {
+        resetAll();
+        animation();
+      });
+
+  end = d3.select(svg.appendChild(end.node().firstChild));
+  start = d3.select(svg.firstChild).attr("transform", transform);
+  end.selectAll(".array").each(function() { this.parentNode.appendChild(this); }); // mask elements
+
+  var startNodes = start.datum().nodes,
+      startElements = startNodes.filter(function(d) { return d.type === "element"; }),
+      endNodes = end.datum().nodes,
+      endGroups = endNodes.filter(function(d) { return d.type === "array"; });
+
+  resetAll();
+
+  return event;
+
+  function resetAll() {
+    start.style("display", "none").call(reset);
+    end.style("display", null).call(reset);
+    play.style("display", null);
+    event.reset();
+  }
+
+  function animation() {
+    start.call(fadeIn, 150);
+    end.style("display", "none");
+    play.style("display", "none");
+    setTimeout(transition1, 1250);
+    event.start();
+  }
+
+  function transition1() {
+    var t = start.transition()
+        .duration(1000 + (startElements.length - 1) * 50)
+        .each("end", transition2);
+
+    t.selectAll(".selection,.array,.link")
+        .duration(0)
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    t.selectAll(".element")
+        .duration(500)
+        .delay(function(d, i) { return 500 + i * 50; })
+        .attr("transform", function(d, i) { return "translate(" + (d.depth - 1) * step + "," + (endGroups[i].x - offset) + ")"; })
+        .attr("class", "array")
+      .select("rect")
+        .attr("width", function(d, i) { return endGroups[i].width; });
+
+    event.middle();
+  }
+
+  function transition2() {
+    end.style("display", null)
+      .selectAll(".element,.to-element")
+        .style("display", "none");
+
+    end.selectAll(".selection,.to-array,.array")
+        .call(fadeIn);
+
+    end.transition()
+        .duration(500)
+        .each("end", transition3);
+
+    event.end();
+  }
+
+  function transition3() {
+    start.style("display", "none");
+
+    end.selectAll(".element")
+        .style("display", null)
+        .attr("transform", function(d) { return "translate(" + d.parent.depth * step + "," + d.parent.x + ")"; })
+      .transition()
+        .duration(500)
+        .delay(function(d, i) { return i * 50; })
+        .attr("transform", function(d) { return "translate(" + d.depth * step + "," + d.x + ")"; });
+
+    end.selectAll(".to-element")
+        .style("display", null)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.source.depth * step + d.source.width, x: d.source.x}; })
+          .target(function(d, i) { return {y: d.source.depth * step + d.source.width, x: d.source.x}; })
+          .projection(function(d) { return [d.y, d.x]; }))
+      .transition()
+        .duration(500)
+        .delay(function(d, i) { return i * 50; })
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.source.depth * step + d.source.width, x: d.source.x}; })
+          .target(function(d, i) { return {y: d.target.depth * step, x: d.target.x}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    end.transition()
+        .duration(2000)
+        .each("end", resetAll);
+  }
+}
+
+function updateAnimation(leftRoot, rightRoot, endRoot, outerHeight) {
+  var start = tree(leftRoot, rightRoot, outerHeight),
+      left = d3.select(start.node().firstChild),
+      right = d3.select(left.node().nextSibling),
+      end = tree(endRoot, outerHeight).remove(),
+      height = +start.attr("height");
+
+  end = d3.select(start.node().appendChild(end.node().firstChild));
+  left.selectAll(".element").each(function() { this.parentNode.appendChild(this); }); // mask keys
+  right.selectAll(".datum").each(function() { this.parentNode.appendChild(this); }); // mask keys
+  start.node().appendChild(left.node());
+  start.node().appendChild(right.node());
+
+  var leftKeys = left.datum().nodes.filter(function(d) { return d.type === "key"; }),
+      rightKeys = right.datum().nodes.filter(function(d) { return d.type === "key"; }),
+      endElements = end.datum().nodes.filter(function(d) { return d.parent && d.parent.type === "array"; });
+
+  leftKeys.forEach(function(l, i) {
+    if ("join" in l) {
+      rightKeys[i + l.join].joined = true;
+      endElements[i + l.join].start = l.parent;
+      l.parent.end = endElements[i + l.join];
+    }
+  });
+
+  leftKeys.forEach(function(l, i) {
+    if (!("join" in l)) endElements.some(function(e) {
+      if (!e.start) {
+        e.start = l.parent;
+        l.parent.end = e;
+        return true;
+      }
+    });
+  });
+
+  var play = start.append("g")
+      .attr("class", "play");
+
+  play.append("circle")
+      .attr("r", 45)
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")");
+
+  play.append("path")
+      .attr("d", "M-22,-30l60,30l-60,30z")
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")scale(.7)");
+
+  play.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .on("mousedown", function() {
+        play.classed("mousedown", true);
+        d3.select(window).on("mouseup", function() { play.classed("mousedown", false); });
+      })
+      .on("click", function() {
+        resetAll();
+        animation();
+      });
+
+  resetAll();
+
+  function resetAll() {
+    play.style("display", null);
+    left.style("display", "none").call(reset);
+    right.style("display", "none").call(reset);
+    right.selectAll(".key").classed("joined", function(d) { return d.joined; });
+    right.selectAll(".datum").classed("joined", function(d) { return d.children[0].joined; });
+    right.selectAll(".to-key").classed("joined", function(d) { return d.target.joined; });
+    end.call(reset);
+  }
+
+  function animation() {
+    play.style("display", "none");
+    end.style("display", "none");
+    left.call(fadeIn);
+    right.call(fadeIn);
+    setTimeout(transition1, 1250);
+  }
+
+  function transition1() {
+    left.selectAll(".key").filter(function(d) { return !("join" in d); })
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    left.selectAll(".to-key").filter(function(d) { return !("join" in d.target); })
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    left.selectAll(".element").filter(function(d) { return !("join" in d.children[0]); })
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    left.selectAll(".to-element").filter(function(d) { return !("join" in d.target.children[0]); })
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    right.selectAll(".link > :not(.joined),.node > :not(.joined)")
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    end.style("display", null);
+
+    end.selectAll(".datum,.to-datum")
+        .style("display", "none");
+
+    end.selectAll(".element,.null")
+        .attr("transform", function(d, i) { return "translate(" + d.depth * step + "," + d.start.x + ")"; });
+
+    end.selectAll(".to-element,.to-null")
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.source.depth * step + d.source.width, x: d.source.x}; })
+          .target(function(d) { return {y: d.target.depth * step, x: d.target.start.x}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    setTimeout(transition2, 500);
+  }
+
+  function transition2() {
+    left.selectAll(".element").transition()
+        .duration(500)
+        .attr("transform", function(d, i) { return "translate(" + d.depth * step + "," + d.end.x + ")"; });
+
+    left.selectAll(".key").transition()
+        .duration(500)
+        .attr("transform", function(d, i) { return "translate(" + d.depth * step + "," + d.parent.end.x + ")"; });
+
+    left.selectAll(".to-element").transition()
+        .duration(500)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.source.depth * step + d.source.width, x: d.source.x}; })
+          .target(function(d) { return {y: d.target.depth * step, x: d.target.end.x}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    left.selectAll(".to-key").transition()
+        .duration(500)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.source.depth * step + d.source.width, x: d.source.end.x}; })
+          .target(function(d) { return {y: d.target.depth * step, x: d.target.parent.end.x}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    left.selectAll(".join").transition()
+        .duration(500)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.width, x: 0}; })
+          .target(function(d) { return {y: 88, x: 0}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    end.selectAll(".element,.null").transition()
+        .duration(500)
+        .attr("transform", function(d, i) { return "translate(" + d.depth * step + "," + d.x + ")"; });
+
+    end.selectAll(".to-element,.to-null").transition()
+        .duration(500)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.source.depth * step + d.source.width, x: d.source.x}; })
+          .target(function(d) { return {y: d.target.depth * step, x: d.target.x}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    setTimeout(transition3, 500);
+  }
+
+  function transition3() {
+    var offset = 12;
+
+    left.selectAll(".join").transition()
+        .duration(500)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: d.width, x: 0}; })
+          .target(function(d) { return {y: d.width, x: 0}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    left.selectAll(".to-key")
+        .attr("class", "from-element to-datum");
+
+    right.selectAll(".to-key").transition()
+        .duration(500)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: (d.source.depth - 2) * step + offset - d.source.width, x: d.source.x}; })
+          .target(function(d) { return {y: (d.source.depth - 2) * step + offset - d.source.width, x: d.source.x}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    right.selectAll(".key").transition()
+        .duration(500)
+        .attr("transform", function(d, i) { return "translate(" + ((d.depth - 1) * step + offset) + "," + d.x + ")"; });
+
+    right.selectAll(".datum").transition()
+        .duration(500)
+        .attr("transform", function(d, i) { return "translate(" + ((d.depth - 2) * step + offset) + "," + d.x + ")"; });
+
+    setTimeout(resetAll, 2000);
+  }
+}
+
+function exitAnimation(leftRoot, rightRoot, endRoot, outerHeight) {
+  var start = tree(leftRoot, rightRoot, outerHeight),
+      left = d3.select(start.node().firstChild),
+      right = d3.select(left.node().nextSibling),
+      end = tree(endRoot, outerHeight).remove(),
+      height = +start.attr("height");
+
+  end = d3.select(start.node().appendChild(end.node().firstChild));
+  start.node().appendChild(left.node());
+  start.node().appendChild(right.node());
+
+  var play = start.append("g")
+      .attr("class", "play");
+
+  play.append("circle")
+      .attr("r", 45)
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")");
+
+  play.append("path")
+      .attr("d", "M-22,-30l60,30l-60,30z")
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")scale(.7)");
+
+  play.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .on("mousedown", function() {
+        play.classed("mousedown", true);
+        d3.select(window).on("mouseup", function() { play.classed("mousedown", false); });
+      })
+      .on("click", function() {
+        resetAll();
+        animation();
+      });
+
+  resetAll();
+
+  function resetAll() {
+    play.style("display", null);
+    left.style("display", "none").call(reset);
+    right.style("display", "none").call(reset);
+    end.call(reset);
+  }
+
+  function animation() {
+    play.style("display", "none");
+    end.style("display", "none");
+    left.call(fadeIn);
+    right.call(fadeIn);
+    setTimeout(transition1, 1250);
+  }
+
+  function transition1() {
+    end.style("display", null);
+
+    left
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    right
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    setTimeout(resetAll, 2000);
+  }
+}
+
+function enterAnimation(leftRoot, rightRoot, endRoot, outerHeight) {
+  var start = tree(leftRoot, rightRoot, outerHeight),
+      left = d3.select(start.node().firstChild),
+      right = d3.select(left.node().nextSibling),
+      end = tree(endRoot, outerHeight).remove(),
+      height = +start.attr("height");
+
+  start.node().appendChild(left.node());
+  start.node().appendChild(right.node());
+  end = d3.select(start.node().appendChild(end.node().firstChild));
+
+  var leftKeys = left.datum().nodes.filter(function(d) { return d.type === "key"; }),
+      rightKeys = right.datum().nodes.filter(function(d) { return d.type === "key"; });
+
+  leftKeys.forEach(function(l, i) {
+    if ("join" in l) {
+      rightKeys[i + l.join].joined = true;
+    }
+  });
+
+  var play = start.append("g")
+      .attr("class", "play");
+
+  play.append("circle")
+      .attr("r", 45)
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")");
+
+  play.append("path")
+      .attr("d", "M-22,-30l60,30l-60,30z")
+      .attr("transform", "translate(" + (margin.left + width / 2) + "," + height / 2 + ")scale(.7)");
+
+  play.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .on("mousedown", function() {
+        play.classed("mousedown", true);
+        d3.select(window).on("mouseup", function() { play.classed("mousedown", false); });
+      })
+      .on("click", function() {
+        resetAll();
+        animation();
+      });
+
+  resetAll();
+
+  function resetAll() {
+    play.style("display", null);
+    left.style("display", "none").call(reset);
+    right.style("display", "none").call(reset);
+    right.selectAll(".key").classed("joined", function(d) { return d.joined; });
+    right.selectAll(".datum").classed("joined", function(d) { return d.children[0].joined; });
+    right.selectAll(".to-key").classed("joined", function(d) { return d.target.joined; });
+    end.call(reset);
+  }
+
+  function animation() {
+    play.style("display", "none");
+    end.style("display", "none");
+    left.call(fadeIn);
+    right.call(fadeIn);
+    setTimeout(transition1, 1250);
+  }
+
+  function transition1() {
+    end.style("display", null);
+
+    end.selectAll(".element,.datum,.to-datum")
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    left.selectAll(".element,.to-element,.key,.to-key")
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    right.selectAll(".array,.to-array,.data,.to-function,.to-datum,.joined")
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    setTimeout(transition2, 750);
+  }
+
+  function transition2() {
+    var offset = 12;
+
+    right.selectAll(".key:not(.joined)").transition()
+        .duration(500)
+        .attr("transform", function(d, i) { return "translate(" + ((d.depth - 2) * step + offset) + "," + d.x + ")"; });
+
+    right.selectAll(".datum:not(.joined)").transition()
+        .duration(500)
+        .attr("transform", function(d, i) { return "translate(" + ((d.depth - 2) * step + offset) + "," + d.x + ")"; });
+
+    right.selectAll(".to-key:not(.joined)").transition()
+        .duration(500)
+        .attr("d", d3.svg.diagonal()
+          .source(function(d) { return {y: (d.source.depth - 2) * step + offset - d.source.width, x: d.source.x}; })
+          .target(function(d) { return {y: (d.source.depth - 3) * step + offset - d.source.width, x: d.source.x}; })
+          .projection(function(d) { return [d.y, d.x]; }));
+
+    setTimeout(transition3, 500);
+  }
+
+  function transition3() {
+    right.selectAll(".to-key:not(.joined)")
+        .style("stroke-opacity", 0);
+
+    end.selectAll(".element,.datum,.to-datum")
+        .style("stroke-opacity", 1)
+        .style("fill-opacity", 1);
+
+    setTimeout(resetAll, 2000);
+  }
+}
+
+function fadeIn(selection, delay) {
+  selection
+      .style("display", null)
+      .style("stroke-opacity", 0)
+      .style("fill-opacity", 0)
+    .transition()
+      .duration(delay || 0)
+      .style("stroke-opacity", 1)
+      .style("fill-opacity", 1);
+}
+
+</script>
+
+<aside><a href="http://ja.d3js.info/mike/selection/">日本語</a></aside>
+
+<p>In the past I have <a href="../d3/workshop/">presented</a> <a href="../join/">simplified</a> <a href="http://mbostock.github.io/d3/tutorial/circle.html">descriptions</a> of <a href="http://d3js.org">D3</a>’s selections, providing only enough detail to get started. This article takes a more comprehensive approach; rather than saying how to <i>use</i> <a href="https://github.com/mbostock/d3/wiki/Selections">selections</a>, I will explain how selections are <i>implemented</i>. This may take longer to read, but it should dispel any magic and help you master data-driven documents.
+
+<p>예전에 <a href="http://d3js.org">D3</a>를 시작하는 데 필요한 정도로만, D3의 셀렉션에 대해 <a href="../join/">단순</a>하게 <a href="http://mbostock.github.io/d3/tutorial/circle.html">설명</a>한 <a href="../d3/workshop/">프리젠테이션</a>을 준비한 적이 있었다. 이 글에서는 단순히 <a href="https://github.com/mbostock/d3/wiki/Selections">셀렉션</a>의 <i>사용 방법</i>을 다루기 보다는, <i>구현 방법</i>을 포함하여 셀렉션을 더 종합적으로 접근해서 다루고자 한다. 그래서 읽는 데 오래 걸릴 수는 있겠지만, D3가 마술 같다는 느낌을 떨쳐 내고, 데이터 기반 문서(Data-Driven Documents, D3)를 제대로 마스터 하는 데 분명 도움이 될 것이다.
+
+<p>The structure of this article may at first seem arbitrary. It describes the internal workings of selections rather than the design motivations, so you may wonder why such mechanisms are needed. This is simply because it is easier to lay all the pieces out first before explaining how everything works in tandem. By the time you read to the end, the intent of the design as well as its function should be clear.
+
+<p>이 글의 구조는 처음보면 뭔가 정돈되지 않고 멋대로 나열되어 있는 것처럼 보일 수도 있을 것이다. 이 글은 셀렉션을 이렇게 설계한 이유에 대한 내용 보다는 셀렉션의 내부 작동 방식에 대해 설명하고 있기 때문에, 읽다보면 왜 이런 메커니즘이 필요했는 지 궁금할 수 있다. 먼저 필요한 요소들을 죄다 꺼내 놓은 다음에 각 요소가 어떻게 동작하는 지 설명하는 것이 더 쉬우므로, 끝까지 읽고 나면 작동 원리 뿐 아니라 설계의 의도까지도 명확하게 이해할 수 있을 것이다.
+
+<p>D3 is a visualization library, so this article incorporates visual explanations to accompany the text. In subsequent diagrams, the left side of the diagram will show the structure of selections, while the right side will show the structure of data:
+
+<p>D3는 시각화 라이브러리다. 따라서, 텍스트에 시각적인 설명을 포함해서 이야기를 풀어갈 것이다. 설명에 나오는 다이어그램에서, 아래와 같이 왼쪽은 셀렉션의 구조를 보여주고, 오른쪽은 데이터의 구조를 보여줄 것이다:
+
+<p><svg width="740" height="120" style="margin:1em -10px;">
+  <g transform="translate(9.5,9.5)">
+    <rect fill="#eee" stroke="#ccc" stroke-dasharray="2,2" width="355" height="100"/>
+    <rect fill="#eee" stroke="#ccc" stroke-dasharray="2,2" x="365" width="355" height="100"/>
+    <rect fill="#a1d99b" fill-opacity=".8" stroke="#71a76c" stroke-dasharray="2,2" y="10" x="300" width="120" height="80"/>
+    <text x="178" text-anchor="middle" y="50" dy=".35em">왼쪽은 셀렉션의 구조</text>
+    <text x="360" text-anchor="middle" y="50" dy=".35em">연결부</text>
+    <text x="543" text-anchor="middle" y="50" dy=".35em">오른쪽은 데이터의 구조</text>
+  </g>
+</svg>
+
+<p>Rounded rectangles such as <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="datum"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">thing</text></g></svg></span> indicate JavaScript objects of various types, ranging from literal objects (<code>{foo: 16}</code>), primitive values (<code>"hello"</code>), arrays of numbers (<code>[1, 2, 3]</code>) to DOM elements. Certain special object types are colored, including <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="selection"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">selection</text></g></svg></span>, <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="array"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">array</text></g></svg></span>, and <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="element"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">element</text></g></svg></span>. References from one object to another are indicated with connecting lines (<span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="link" width="55" height="22"><line x1="1" x2="54" y1="11" y2="11"/></svg></span>). For example, an array containing the number 42 looks like:
+
+<p>
+<span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="datum"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">thing</text></g></svg></span>처럼 모서리가 둥근 네모로 표시된 것은 리터럴 객체(<code>{foo: 16}</code>), 원시 데이터 값(<code>"hello"</code>), 숫자 배열(<code>[1, 2, 3]</code>)에서 DOM 요소까지 다양한 자바스크립트의 객체를 나타낸다. <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="selection"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">셀렉션</text></g></svg></span>, <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="array"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">배열</text></g></svg></span>, <span style="display:inline-block;position:relative;width:85px;"><svg style="position:absolute;top:-17px;" class="node" width="85" height="22"><g transform="translate(1,1)" class="element"><rect rx="6" ry="6" width="83" height="20"/><text x="43" y="10" dy=".35em" text-anchor="middle">DOM요소</text></g></svg></span> 처럼 특별한 객체는 색깔을 넣어 표시했다. 한 객체에서 다른 객체로의 참조는 연결선으로 표시했다. 예를 들어, 42라는 숫자 하나를 원소로 가지는 배열은 다음과 같이 표시한다:
+
+<pre><code>var array = [42];</code></pre>
+
+<script>
+
+tree(
+  {type: "array", name: "array", children: [
+    {type: "datum", name: "42"}
+  ]},
+  24 * 1
+);
+
+</script>
+
+<p>Wherever possible, the code that generates the given selection appears immediately above the diagram. Opening your browser’s JavaScript console and creating selections interactively is a great way to test your understanding of the text!
+
+<p>설명에 나오는 셀렉션을 만들어내는 코드는 다이어그램의 바로 위에 배치했다. 브라우저의 자바스크립트 콘솔을 열고 직접 셀렉션을 생성하고 테스트 하면서 읽으면 훨씬 이해하기 쉬울 것이다!
+
+<p>Let’s begin.
+
+<p>이제 본격적으로 시작해 보자.
+
+<h2><a href="#subclass" name="subclass">#</a>배열의 서브클래스</h2>
+
+<aside>JavaScript doesn’t yet support array subclasses directly, so arrays are subclassed through <a href="http://perfectionkills.com/how-ecmascript-5-still-does-not-allow-to-subclass-an-array/">prototype chain injection</a>.</aside>
+
+<aside>자바스크립트는 아직 배열의 서브클래스를 직접적으로 지원하지는 않는다. 따라서 <a href="http://perfectionkills.com/how-ecmascript-5-still-does-not-allow-to-subclass-an-array/">프로토타입 체인 주입</a>을 통해 배열의 서브클래스를 얻을 수 있다.</aside>
+
+<p>You were probably told that selections are arrays of DOM elements. False. For one, selections are a <i>subclass</i> of array; this subclass provides methods to manipulate selected elements, such as setting <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-attr">attributes</a> and <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-style">styles</a>. Selections inherit native array methods as well, such as <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/forEach">array.forEach</a> and <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/forEach">array.map</a>. However, you won’t often use native methods as D3 provides convenient alternatives, such as <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-each">selection.each</a>. (A few native methods are overridden to adapt their behavior to selections, namely <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-filter">selection.filter</a> and <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-sort">selection.sort</a>.)
+
+<p>여러분은 셀렉션이 DOM 요소의 배열이라는 말을 들어봤을 것이다. 한마디로 아니올시다. 셀렉션은 배열의 <i>서브클래스</i>다. 셀렉트된 요소의 <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-attr">속성</a>이나 <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-style">스타일</a>을 설정할 수 있는 메서드를 이 서브클래스가 제공한다. 셀렉션은 <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/forEach">array.forEach</a> 와 <a href="https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/map">array.map</a> 과 같은 네이티브 메서드도 상속받아 지원하지만, D3가 <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-each">selection.each</a> 와 같은 편리한 대체 메서드를 제공하기 때문에, 네이티브 메서드를 직접 사용할 일은 별로 없을 것이다(<a href="https://github.com/mbostock/d3/wiki/Selections#wiki-filter">selection.filter</a> 와 <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-sort">selection.sort</a> 같은 몇 가지 네이티브 메서드는 재정의 되었다).
+
+<h2><a href="#group" name="group">#</a>Grouping Elements</h2>
+
+<p>Another reason selections aren’t literally arrays of elements is that they are <i>arrays of arrays</i> of elements: a selection is an array of groups, and each group is an array of elements. For example, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> returns a selection with one group containing the selected element:
+
+<pre><code>var selection = d3.select("body");</code></pre>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "body"}
+    ]}
+  ]},
+  24 * 1
+);
+
+</script>
+
+<aside>In Chrome, you can open the console with the keyboard shortcut <span style="font-family:'Lucida Grande';">⌥⌘J</span>.</aside>
+
+<p>In the <a href="https://developers.google.com/chrome-developer-tools/docs/console#opening_the_console">JavaScript console</a>, try running this command and inspecting the group as <code>selection[0]</code> and the node as <code>selection[0][0]</code>. While accessing a node directly is supported by D3’s API, for reasons that will soon be apparent it is more common to use <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-node">selection.node</a>.
+
+<p>Likewise, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_selectAll">d3.selectAll</a> returns a selection with one group and any number of elements:
+
+<pre><code>d3.selectAll("h2");</code></pre>
+
+<aside>While the selection is a subclass of array, groups are plain arrays.</aside>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "h2"},
+      {type: "element", name: "h2"},
+      {type: "element", name: "h2"},
+      {type: "element", name: "h2"}
+    ]}
+  ]},
+  24 * 4
+);
+
+</script>
+
+<p>Selections returned by d3.select and d3.selectAll have exactly one group. The only way for you to obtain a selection with multiple groups is <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-selectAll">selection.selectAll</a>. For example, if you select all table rows and then select the rows’ cells, you’ll get a group of sibling cells for each row:
+
+<pre><code>d3.<span id="select-all-1-1">selectAll("tr")</span>.<span id="select-all-1-2">selectAll("td")</span>;</code></pre>
+
+<aside>Although this selection’s groups all have four elements, in general a selection’s groups can have different numbers of elements. Some groups might even be empty!</aside>
+
+<script>
+
+selectAllAnimation(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "tr"},
+      {type: "element", name: "tr"},
+      {type: "element", name: "tr"},
+      {type: "element", name: "tr"}
+    ]}
+  ]},
+  24 * 4,
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]}
+  ]},
+  24 * 16
+).on("start", function() {
+  d3.select("#select-all-1-1").style("background", "#ff0");
+}).on("middle", function() {
+  d3.select("#select-all-1-1").style("background", null);
+}).on("end", function() {
+  d3.select("#select-all-1-2").style("background", "#ff0");
+}).on("reset", function() {
+  d3.selectAll("#select-all-1-1,#select-all-1-2").style("background", null);
+});
+
+</script>
+
+<p>With selectAll, <b>every element in the old selection becomes a group in the new selection</b>; each group contains an old element’s matching descendant elements. So, if each table cell contained a <a href="https://developer.mozilla.org/en-US/docs/HTML/Element/span">span</a> element, and you called selectAll a third time, you’d get a selection with sixteen groups:
+
+<pre><code>d3.selectAll("tr").<span id="select-all-2-1">selectAll("td")</span>.<span id="select-all-2-2">selectAll("span")</span>;</code></pre>
+
+<script>
+
+selectAllAnimation(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"},
+      {type: "element", name: "td"}
+    ]}
+  ]},
+  24 * 16,
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]},
+    {type: "array", name: "group", children: [{type: "element", name: "span"}]}
+  ]},
+  24 * 16
+).on("start", function() {
+  d3.select("#select-all-2-1").style("background", "#ff0");
+}).on("middle", function() {
+  d3.select("#select-all-2-1").style("background", null);
+}).on("end", function() {
+  d3.select("#select-all-2-2").style("background", "#ff0");
+}).on("reset", function() {
+  d3.selectAll("#select-all-2-1,#select-all-2-2").style("background", null);
+});
+
+</script>
+
+<aside>Try inspecting a selection in the JavaScript console to find the groups’ parent nodes. For more on this topic, read my previous tutorial on <a href="../nest/">nested selections</a>.</aside>
+
+<p>Each group has a <code>parentNode</code> property which stores the shared parent of all the group’s elements. The parent node is set when the group is created. Thus, if you call <code>d3.selectAll("tr")&#8203;.selectAll("td")</code>, the returned selection contains groups of td elements, whose parents are tr elements. For selections returned by d3.select and d3.selectAll, the parent element is the <a href="https://developer.mozilla.org/en-US/docs/DOM/document.documentElement">document element</a>.
+
+<p>Most of the time, you can safely ignore that selections are grouped. When you use a function to define a selection.attr or selection.style, the function is called for each element; the main difference with grouping is that the second argument to your function (<code>i</code>) is the within-group index rather than the within-selection index.
+
+<!-- The killer feature for groups is <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>, which allows you to define data per-group (rather than for the entire selection), and thus more easily create hierarchical DOM elements from hierarchical data. We’ll revisit this topic when we get to data joins. -->
+
+<h2><a href="#non-grouping" name="non-grouping">#</a>Non-Grouping Operations</h2>
+
+<p>Only selectAll has special behavior regarding grouping; <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a> preserves the existing grouping. The select method differs because there is exactly one element in the new selection for each element in the old selection. Thus, select also propagates data from parent to child, whereas selectAll does not (hence the need for a data-join)!
+
+<p>The <a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> and <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> methods are wrappers on top of select, so they also preserve grouping and propagate data. For example, given a document with four sections:
+
+<pre><code>d3.selectAll("section");</code></pre>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "section"},
+      {type: "element", name: "section"},
+      {type: "element", name: "section"},
+      {type: "element", name: "section"}
+    ]}
+  ]},
+  24 * 4
+);
+
+</script>
+
+<p>If you append a paragraph element to each section, the new selection likewise has a single group with four elements:
+
+<pre><code>d3.selectAll("section").append("p");</code></pre>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "p"},
+      {type: "element", name: "p"},
+      {type: "element", name: "p"},
+      {type: "element", name: "p"}
+    ]}
+  ]},
+  24 * 4
+);
+
+</script>
+
+<p>Note that the <code>parentNode</code> for this selection is still the document element because selection.selectAll has not been called to regroup the selection.
+
+<h2><a href="#null" name="null">#</a>Null Elements</h2>
+
+<p>Groups can contain nulls to indicate missing elements. Nulls are ignored for most operations; for example, D3 skips null elements when applying styles and attributes.
+
+<p>Null elements can occur when selection.select cannot find a matching element for the given selector. The select method must preserve the grouping structure, so it fills the missing slots with null. For example, if only the last two sections have asides:
+
+<pre><code>d3.selectAll("section").select("aside");</code></pre>
+
+<aside>Here, selection.node would return <code>selection[0][2]</code>, because this aside is the first non-null element.</aside>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "null", name: "null"},
+      {type: "null", name: "null"},
+      {type: "element", name: "aside"},
+      {type: "element", name: "aside"}
+    ]}
+  ]},
+  24 * 4
+);
+
+</script>
+
+<p>As with grouping, you can usually ignore null elements, but note their use in preserving the grouped structure of a selection and its within-group index.
+
+<!-- <p>Null elements are critical when handling the result of a data join, which splits a selection into three parts: <i>enter</i>, <i>update</i> and <i>exit</i>. These three selections share the original selection’s structure, with null elements in-between. -->
+
+<h2><a href="#data" name="data">#</a>Bound to Data</h2>
+
+<p>Perhaps surprisingly, data is <i>not</i> a property of the selection, but a property of its elements. This means that when you bind data to a selection, the data is stored in the DOM rather than in the selection: data is assigned to the <code>__data__</code> property of each element. If an element lacks this property, the associated datum is undefined. Data is therefore persistent while selections can be considered transient: you can reselect elements from the DOM and they will retain whatever data was previously bound to them.
+
+<aside>To verify that data is a property of elements, see <a href="https://github.com/mbostock/d3/blob/master/src/selection/datum.js">selection.datum</a>’s implementation.</aside>
+
+<p>Data is bound to elements one of several ways:<ul>
+
+  <li>Joined to groups of elements via <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>.
+  <li>Assigned to individual elements via <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-datum">selection.datum</a>.
+  <li>Inherited from a parent via append, insert, or select.
+
+</ul>
+
+<p>While there is no reason to set the <code>__data__</code> property directly when you can use selection.datum, doing so illustrates how data binding is implemented:
+
+<aside>You might also find this knowledge useful when inspecting selections in your browser’s developer tools; <code>$0.__data__</code> shows the data bound to the inspected element.</aside>
+
+<pre><code>document.body.__data__ = 42;</code></pre>
+
+<script>
+
+tree(
+  {type: "element", name: "body", children: [
+    {type: "datum", name: "42"}
+  ]},
+  24 * 1
+);
+
+</script>
+
+<p>The D3-idiomatic equivalent is to select the body and call datum:
+
+<pre><code>d3.select("body").datum(42);</code></pre>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "body", children: [
+        {type: "datum", name: "42"}
+      ]}
+    ]}
+  ]},
+  24 * 1
+);
+
+</script>
+
+<p>If we now append an element to the body, the child automatically inherits data from the parent:
+
+<pre><code>d3.select("body").datum(42).append("h1");</code></pre>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "h1", children: [
+        {type: "datum", name: "42"}
+      ]}
+    ]}
+  ]},
+  24 * 1
+);
+
+</script>
+
+<p>And that brings us to the last method of binding data: the mysterious join! But before we can achieve enlightenment, we must answer a more existential question.
+
+<h2><a href="#data" name="data">#</a>What is Data?</h2>
+
+<p>Data in D3 can be any array of values. For example, an array of numbers:
+
+<pre><code>var numbers = [4, 5, 18, 23, 42];</code></pre>
+
+<p>Or an array of objects:
+
+<aside>One of <a href="http://alignedleft.com">Scott Murray</a>’s many tutorials covers <a href="http://alignedleft.com/tutorials/d3/data-types/">common types of data</a> in JavaScript.</aside>
+
+<pre><code>var letters = [
+  {name: "A", frequency: .08167},
+  {name: "B", frequency: .01492},
+  {name: "C", frequency: .02780},
+  {name: "D", frequency: .04253},
+  {name: "E", frequency: .12702}
+];</code></pre>
+
+<p>Even an array of arrays:
+
+<pre><code>var matrix = [
+  [ 0,  1,  2,  3],
+  [ 4,  5,  6,  7],
+  [ 8,  9, 10, 11],
+  [12, 13, 14, 15]
+];</code></pre>
+
+<p>We can mirror the visual representation of selections to represent data. Here’s a plain array of five numbers:
+
+<script>
+
+tree(
+  null,
+  {type: "array", name: "array", children: [
+    {type: "datum", name: "4"},
+    {type: "datum", name: "5"},
+    {type: "datum", name: "18"},
+    {type: "datum", name: "23"},
+    {type: "datum", name: "42"}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>Just as selection.style takes either a constant string to define a uniform style property (<i>e.g.</i>, <code>"red"</code>) for every selected element, or a function to compute a dynamic style per-element (<code>function(d) { return d.color; }</code>), <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a> can accept either a constant value or a function.
+
+<p>However, unlike the other selection methods, <b>selection.data defines data per-group rather than per-element</b>: data is expressed as an array of values for the group, or a function that returns such an array. Thus, a <a href="#group">grouped</a> selection has correspondingly grouped data!
+
+<aside>Since there are four groups in the selection, this data function is invoked four times and returns four arrays (one per invocation). Each returned array here also happens to contain four values, but returned arrays may vary in length depending on data.</aside>
+
+<script>
+
+tree(
+  null,
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "0"},
+      {type: "datum", name: "1"},
+      {type: "datum", name: "2"},
+      {type: "datum", name: "3"}
+    ]},
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "4"},
+      {type: "datum", name: "5"},
+      {type: "datum", name: "6"},
+      {type: "datum", name: "7"}
+    ]},
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "8"},
+      {type: "datum", name: "9"},
+      {type: "datum", name: "10"},
+      {type: "datum", name: "11"}
+    ]},
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "12"},
+      {type: "datum", name: "13"},
+      {type: "datum", name: "14"},
+      {type: "datum", name: "15"}
+    ]}
+  ]},
+  24 * 16
+);
+
+</script>
+
+<p>The blue lines in the diagram indicate that the <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="data"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">data</text></g></svg></span> function <i>returns</i> the linked array. Your data function is passed the datum of the group’s <code>parentNode</code> (<code>d</code>) and the group’s index (<code>i</code>), and returns whatever array of data you want to join to that group. Thus, data is typically expressed as a function of parent data, facilitating the creation of hierarchical DOM elements from hierarchical data.
+
+<p>For selections with only a single group, you can pass the corresponding single array to selection.data directly; you only need a function when binding different data to different groups.
+
+<h2><a href="#key" name="key">#</a>The Key to Enlightenment</h2>
+
+<p>To join data to elements, we must know which datum should be assigned to which element. This is done by pairing keys. A <i>key</i> is simply an identifying string, such as a name; when the key for a datum and an element are equal, the datum is assigned to that element.
+
+<p>The simplest method of assigning keys is by index: the first datum and the first element have the key “0”, the second datum and element have the key “1”, and so on. Joining an array of numbers to a matching array of paragraph elements therefore looks like this, with keys shown in green:
+
+<pre><code>var numbers = [4, 5, 18, 23, 42];</code></pre>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "0", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "1", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "2", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "3", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "4", join: 0}]}
+    ]}
+  ]},
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "4", children: [{type: "key", name: "0"}]},
+      {type: "datum", name: "5", children: [{type: "key", name: "1"}]},
+      {type: "datum", name: "18", children: [{type: "key", name: "2"}]},
+      {type: "datum", name: "23", children: [{type: "key", name: "3"}]},
+      {type: "datum", name: "42", children: [{type: "key", name: "4"}]}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>The resulting selection now has elements bound to data:
+
+<pre><code>d3.selectAll("div").data(numbers);</code></pre>
+
+<aside><a href="http://macwright.org/">Tom MacWright</a>’s “fun, difficult” <a href="http://macwright.org/presentations/dcjq/">introduction to D3</a> explains data joins by way of a simple <a href="http://macwright.org/mistakes/#5010465" style="white-space:nowrap;">reimplementation</a>.</aside>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "div", children: [{type: "datum", name: "4"}]},
+      {type: "element", name: "div", children: [{type: "datum", name: "5"}]},
+      {type: "element", name: "div", children: [{type: "datum", name: "18"}]},
+      {type: "element", name: "div", children: [{type: "datum", name: "23"}]},
+      {type: "element", name: "div", children: [{type: "datum", name: "42"}]}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>Joining by index is convenient if your data and elements are in the same order. However, when orders differ, joining by index is insufficient! In this case, you can specify a <a href="../constancy/#key-functions">key function</a> as the second argument to selection.data. The key function returns the key for a given datum or element. For example, if your data is an array of objects, each with a <code>name</code> property, your key function can return the associated name:
+
+<pre><code>var letters = [
+  {name: "A", frequency: .08167},
+  {name: "B", frequency: .01492},
+  {name: "C", frequency: .02780},
+  {name: "D", frequency: .04253},
+  {name: "E", frequency: .12702}
+];
+
+function name(d) {
+  return d.name;
+}</code></pre>
+
+<aside>The key function is called for each old element and each new data: ten times in this example. The previously-bound data is used to compute old keys, while the new data is used to compute new keys.</aside>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "B", join: 1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: -1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D", join: 1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C", join: -1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "E", join: 0}]}
+    ]}
+  ]},
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "code datum", name: "{name: \"A\"}", children: [{type: "key", name: "A"}]},
+      {type: "code datum", name: "{name: \"B\"}", children: [{type: "key", name: "B"}]},
+      {type: "code datum", name: "{name: \"C\"}", children: [{type: "key", name: "C"}]},
+      {type: "code datum", name: "{name: \"D\"}", children: [{type: "key", name: "D"}]},
+      {type: "code datum", name: "{name: \"E\"}", children: [{type: "key", name: "E"}]}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>Again, the selected elements are now bound to data. The elements have also been reordered within the selection to match the data:
+
+<aside>Although the selection now matches the data, the elements are <i>not</i> automatically reordered in the DOM. For that you must call <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-order">selection.order</a> or <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-sort">selection.sort</a>.</aside>
+
+<pre><code>d3.selectAll("div").data(letters, name);</code></pre>
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "div", children: [{type: "code datum", name: "{name: \"A\"}"}]},
+      {type: "element", name: "div", children: [{type: "code datum", name: "{name: \"B\"}"}]},
+      {type: "element", name: "div", children: [{type: "code datum", name: "{name: \"C\"}"}]},
+      {type: "element", name: "div", children: [{type: "code datum", name: "{name: \"D\"}"}]},
+      {type: "element", name: "div", children: [{type: "code datum", name: "{name: \"E\"}"}]}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>This process can be quite complicated for large grouped selections, but is simplified somewhat because <b>each group is joined independently</b>. Thus, you only need to worry about unique keys within a group, not across the entire selection.
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "B", join: 1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C", join: 1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D", join: 1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: -3}]}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "B", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D", join: 1}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C", join: -1}]}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D", join: +2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "B", join: 0}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C", join: -2}]}
+    ]},
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "C", join: +2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D", join: +2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: -2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "B", join: -2}]}
+    ]}
+  ]},
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "B", children: [{type: "key", name: "B"}]},
+      {type: "datum", name: "C", children: [{type: "key", name: "C"}]},
+      {type: "datum", name: "D", children: [{type: "key", name: "D"}]}
+    ]},
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "B", children: [{type: "key", name: "B"}]},
+      {type: "datum", name: "C", children: [{type: "key", name: "C"}]},
+      {type: "datum", name: "D", children: [{type: "key", name: "D"}]}
+    ]},
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "B", children: [{type: "key", name: "B"}]},
+      {type: "datum", name: "C", children: [{type: "key", name: "C"}]},
+      {type: "datum", name: "D", children: [{type: "key", name: "D"}]}
+    ]},
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "B", children: [{type: "key", name: "B"}]},
+      {type: "datum", name: "C", children: [{type: "key", name: "C"}]},
+      {type: "datum", name: "D", children: [{type: "key", name: "D"}]}
+    ]}
+  ]},
+  24 * 16
+);
+
+</script>
+
+<aside>You can read more about key functions in my previous tutorial on <a href="../constancy/">object constancy</a>.</aside>
+
+<p>The above examples assume an exact 1:1 match between data and elements. But what happens when there’s no matching element for a given datum, or no matching datum for a given element?
+
+<h2><a href="#enter-update-exit" name="enter-update-exit">#</a>Enter, Update and Exit</h2>
+
+<p>When joining elements to data by key, there are three possible logical outcomes:<ul>
+
+  <li><i>Update</i> - There was a matching element for a given datum.
+  <li><i>Enter</i> - There was no matching element for a given datum.
+  <li><i>Exit</i> - There was no matching datum for a given element.
+
+</ul>
+
+<p>These are the three selections returned by <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-enter">selection.enter</a> and <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-exit">selection.exit</a>, respectively. To illustrate, imagine you had a bar chart of the first five letters of the alphabet (ABCDE), and you want to transition to your five favorite vowels (YEAOI). You can use a key function to maintain association of letters to bars across the transition, resulting in the following data join:
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: 2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "B"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "E", join: -3}]}
+    ]}
+  ]},
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "Y", children: [{type: "key", name: "Y"}]},
+      {type: "datum", name: "E", children: [{type: "key", name: "E"}]},
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "O", children: [{type: "key", name: "O"}]},
+      {type: "datum", name: "I", children: [{type: "key", name: "I"}]}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>Two of the previously-displayed letters (A and E) are vowels. These bars are therefore placed in the <b>update</b> selection, in order of the new data:
+
+<pre><code>var div = d3.selectAll("div").data(vowels, name);</code></pre>
+
+<aside>The enter and update selections match the order of the new dataset. New data replaces old data in the update selection.</aside>
+
+<script>
+
+updateAnimation(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: 2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "B"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "E", join: -3}]}
+    ]}
+  ]},
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "Y", children: [{type: "key", name: "Y"}]},
+      {type: "datum", name: "E", children: [{type: "key", name: "E"}]},
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "O", children: [{type: "key", name: "O"}]},
+      {type: "datum", name: "I", children: [{type: "key", name: "I"}]}
+    ]}
+  ]},
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "null", name: "null"},
+      {type: "element", name: "element", children: [{type: "datum", name: "E"}]},
+      {type: "element", name: "element", children: [{type: "datum", name: "A"}]},
+      {type: "null", name: "null"},
+      {type: "null", name: "null"}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>The other three displayed letters (B, C and D) are consonants, and thus have no corresponding data in the new dataset. These elements are therefore placed in the <b>exit</b> selection. Note that the exit selection preserves the order of the original selection, which is sometimes useful when animating prior to removal:
+
+<pre><code>div.exit();</code></pre>
+
+<aside>The exit selection preserves the order, indexes and data of the old selection.</aside>
+
+<script>
+
+exitAnimation(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: 2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "B"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "E", join: -3}]}
+    ]}
+  ]},
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "Y", children: [{type: "key", name: "Y"}]},
+      {type: "datum", name: "E", children: [{type: "key", name: "E"}]},
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "O", children: [{type: "key", name: "O"}]},
+      {type: "datum", name: "I", children: [{type: "key", name: "I"}]}
+    ]}
+  ]},
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "null", name: "null"},
+      {type: "element", name: "element", children: [{type: "datum", name: "B"}]},
+      {type: "element", name: "element", children: [{type: "datum", name: "C"}]},
+      {type: "element", name: "element", children: [{type: "datum", name: "D"}]},
+      {type: "null", name: "null"}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>Lastly, three of the vowels (Y, O and I) were not previously displayed, and thus have no corresponding element. These form the <b>enter</b> selection:
+
+<pre><code>div.enter();</code></pre>
+
+<aside>The placeholders in an enter selection are typically transient; the enter selection is replaced with a normal selection of elements when you call enter.append or enter.insert.</aside>
+
+<script>
+
+enterAnimation(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "key", name: "A", join: 2}]},
+      {type: "element", name: "element", children: [{type: "key", name: "B"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "C"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "D"}]},
+      {type: "element", name: "element", children: [{type: "key", name: "E", join: -3}]}
+    ]}
+  ]},
+  {type: "data", name: "data", children: [
+    {type: "array", name: "array", children: [
+      {type: "datum", name: "Y", children: [{type: "key", name: "Y"}]},
+      {type: "datum", name: "E", children: [{type: "key", name: "E"}]},
+      {type: "datum", name: "A", children: [{type: "key", name: "A"}]},
+      {type: "datum", name: "O", children: [{type: "key", name: "O"}]},
+      {type: "datum", name: "I", children: [{type: "key", name: "I"}]}
+    ]}
+  ]},
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "placeholder", children: [{type: "datum", name: "Y"}]},
+      {type: "null", name: "null"},
+      {type: "null", name: "null"},
+      {type: "element", name: "placeholder", children: [{type: "datum", name: "O"}]},
+      {type: "element", name: "placeholder", children: [{type: "datum", name: "I"}]}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>While update and exit are normal selections, enter is a subclass of selection. This is necessary because it represents elements that <i>do not yet exist</i>. An enter selection contains placeholders rather than DOM elements; these placeholders are simply objects with a <code>__data__</code> property. The implementation of <a href="https://github.com/mbostock/d3/blob/master/src/selection/enter-select.js">enter.select</a> is then specialized such that nodes are inserted into the group’s parent, replacing the placeholder. This is why it is critical to call selection.selectAll prior to a data join: it establishes the parent node for entering elements.
+
+<h2><a href="#enter-update" name="enter-update">#</a>Merging Enter & Update</h2>
+
+<p>The <a href="http://bl.ocks.org/mbostock/3808218">general update pattern</a> with a data join appends entering elements and removes exiting elements, while modifying dynamic attributes, styles and other properties of updating elements. Often, there’s overlap between properties of updating and entering elements.
+
+<p>To reduce duplicate code, enter.append has a convenient side-effect: it replaces null elements in the update selection with the newly-created elements from the enter selection. Thus, after enter.append, the update selection is modified to contain both entering and updating elements. The update selection subsequently contains all currently-displayed elements:
+
+<script>
+
+tree(
+  {type: "selection", name: "selection", children: [
+    {type: "array", name: "group", children: [
+      {type: "element", name: "element", children: [{type: "datum", name: "A"}]},
+      {type: "element", name: "element", children: [{type: "datum", name: "E"}]},
+      {type: "element", name: "element", children: [{type: "datum", name: "I"}]},
+      {type: "element", name: "element", children: [{type: "datum", name: "O"}]},
+      {type: "element", name: "element", children: [{type: "datum", name: "U"}]}
+    ]}
+  ]},
+  24 * 5
+);
+
+</script>
+
+<p>With the selection once again consistent with the document, the life-cycle of the data join is complete.
+
+<h3 style="margin-top:8em;">Acknowledgements</h3>
+
+<p>Thank you to Anna Powell-Smith, Scott Murray, Nelson Minar, Tom Carden, Shan Carter, Jason Davies, Tom MacWright and John Firebaugh for reviewing and providing feedback to improve this article.
+
+<h3>Further Reading</h3>
+
+<p>If you found this article informative, if you found parts unclear or confusing, or if you have followup questions or feedback, please let me know via <a href="https://twitter.com/mbostock">Twitter</a> or <a href="https://news.ycombinator.com/item?id=5614421">Hacker News</a>. To continue learning about selections, <a href="https://github.com/mbostock/d3/tree/master/src/selection/">reading D3’s source</a> is a rigorous way to test your understanding. And here are several excellent talks and tutorials by others:
+
+<ul>
+  <li><a href="http://alignedleft.com/tutorials/d3/binding-data/">Binding Data</a> by Scott Murray
+  <li><a href="http://www.rvl.io/annaps/d3-journey-to-the-source/">Journey to the Source</a> by Anna Powell-Smith
+  <li><a href="http://macwright.org/presentations/dcjq/">A Fun, Difficult Introduction to D3</a> by Tom MacWright
+</ul>
+
+<footer>
+  <aside>April 26, 2013</aside>
+  <a href="../" rel="author">Mike Bostock</a>
+</footer>
+
+<!-- You found me! -->
+<table style="position:absolute;top:-1000px;">
+  <tr>
+    <td><span>0</span></td>
+    <td><span>1</span></td>
+    <td><span>2</span></td>
+    <td><span>3</span></td>
+  </tr>
+  <tr>
+    <td><span>4</span></td>
+    <td><span>5</span></td>
+    <td><span>6</span></td>
+    <td><span>7</span></td>
+  </tr>
+  <tr>
+    <td><span>8</span></td>
+    <td><span>9</span></td>
+    <td><span>10</span></td>
+    <td><span>11</span></td>
+  </tr>
+  <tr>
+    <td><span>12</span></td>
+    <td><span>13</span></td>
+    <td><span>14</span></td>
+    <td><span>15</span></td>
+  </tr>
+</table>
+
+<footer style="position:absolute;top:-1000px;">
+  <section></section>
+  <section></section>
+  <section><aside>Hello!</aside></section>
+  <section><aside>There!</aside></section>
+</footer>
+
+<footer style="position:absolute;top:-1000px;">
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+</footer>
+
+<script>
+
+console.warn("Hooray, you opened the JavaScript console. Have fun!");
+
+</script>
+<script>
+
+GoogleAnalyticsObject = "ga", ga = function() { ga.q.push(arguments); }, ga.q = [], ga.l = +new Date;
+ga("create", "UA-48272912-3", "ocks.org");
+ga("send", "pageview");
+
+</script>
+<script async src="../highlight.min.js"></script>
+<script async src="//www.google-analytics.com/analytics.js"></script>
