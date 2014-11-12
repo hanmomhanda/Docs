@@ -1240,7 +1240,7 @@ tree(
 
 <p class='d3-en'>And that brings us to the last method of binding data: the mysterious join! But before we can achieve enlightenment, we must answer a more existential question.</p>
 
-<p>이것은 데이터 바인딩의 마지막 방식인 상속에 의한 방식이다: 데이터 조인은 실로 신비롭도다! 하지만 진정한 깨우침을 얻으려면, 좀 더 존재론적인 질문에 답을 할 수 있어야 한다.
+<p>이것은 데이터 바인딩의 마지막 방식인 상속에 의한 방식이다. 데이터 바인딩에 대한 진정한 깨우침을 얻으려면, 좀 더 존재론적인 질문에 답을 할 수 있어야 한다.
 
 <h2><a href="#data" name="data">#</a>데이터란 무엇인가?</h2>
 
@@ -1350,13 +1350,15 @@ tree(
 
 <h2><a href="#key" name="key">#</a>깨우침을 향한 열쇠</h2>
 
+<aside>(역자 주 : D3에서의 데이터 바인딩은 어떤 데이터를 문서요소의 __data__ 속성에 값으로 할당하는 것을 의미하며 기본적으로 값:값의 관계다.<br/>이에 반해 데이터 조인은, 데이터 배열을 셀렉션의 그룹 배열에 어떤 규칙을 가지고 접목하는 것으로 호스트 코드 상에서는 배열:배열의 관계다.<br/>데이터 조인은 데이터 바인딩의 한 방식이며, 데이터 조인을 하면 결과적으로 데이터 바인딩이 실행된다.)</aside>
+
 <p class='d3-en'>To join data to elements, we must know which datum should be assigned to which element. This is done by pairing keys. A <i>key</i> is simply an identifying string, such as a name; when the key for a datum and an element are equal, the datum is assigned to that element.</p>
 
 <p>데이터를 문서요소에 조인 시킬 때는 어떤 데이터가 어떤 문서요소에 할당되는 지 알아야 한다. 이를 위해 키(key)가 필요하다. <i>키</i>는 이름처럼 식별자로 사용되는 단순한 문자열이다; 데이터는 자신의 키 값과 같은 키 값을 가진 문서요소에 할당된다.
 
 <p class='d3-en'>The simplest method of assigning keys is by index: the first datum and the first element have the key “0”, the second datum and element have the key “1”, and so on. Joining an array of numbers to a matching array of paragraph elements therefore looks like this, with keys shown in green:</p>
 
-<p>키를 할당하는 가장 쉬운 방법은 인덱스를 이용하는 것이다: 첫 번째 데이터와 첫 번째 문서요소의 인덱스 값은 모두 "0"이고, 두 번째 데이터와 두 번째 문서요소의 키 값은 "1", 세 번째는 "2" ... 와 같은 식이다. 숫자 배열 데이터를 단락 문서요소의 배열에 매칭하는 것이 바로 이 방식이다. 아래 그림에서 키는 녹색으로 표시되어있다.
+<p>키를 할당하는 가장 쉬운 방법은 인덱스를 이용하는 것이다: 첫 번째 데이터와 첫 번째 문서요소의 인덱스 값은 모두 "0"이고, 두 번째 데이터와 두 번째 문서요소의 키 값은 "1", 세 번째는 "2" ... 와 같은 식이다. 숫자 배열을 인덱스를 기준으로 매칭되는 단락 문서요소의 배열에 조인하는 것이 바로 이 방식이다. 아래 그림에서 키는 녹색으로 표시되어있다.
 
 <pre><code>var numbers = [4, 5, 18, 23, 42];</code></pre>
 
@@ -1733,13 +1735,15 @@ enterAnimation(
 
 <p class='d3-en'>While update and exit are normal selections, enter is a subclass of selection. This is necessary because it represents elements that <i>do not yet exist</i>. An enter selection contains placeholders rather than DOM elements; these placeholders are simply objects with a <code>__data__</code> property. The implementation of <a href="https://github.com/mbostock/d3/blob/master/src/selection/enter-select.js">enter.select</a> is then specialized such that nodes are inserted into the group’s parent, replacing the placeholder. This is why it is critical to call selection.selectAll prior to a data join: it establishes the parent node for entering elements.</p>
 
-<p>update 셀렉션과 exit 셀렉션이 보통 셀렉션이지만, enter 셀렉션은 셀렉션의 서브클래스다. enter 셀렉션은 <i>아직 존재하지도 않는</i> 문서요소를 나타내기 때문에 보통 셀렉션과는 다를 수 밖에 없다. enter 셀렉션은 DOM 문서요소가 아니라 자리채우미(placeholder)를 포함한다; 자리채우미는 <code>__data__</code> 속성을 가지는 단순 객체다. (역자 주 : 이 부분 보완 필요-시작)<a href="https://github.com/mbostock/d3/blob/master/src/selection/enter-select.js">enter.select</a>은 노드가 자리채우미를 대체하면서 그룹의 부모로 삽입되도록 특별하게 구현되어 있다. 바로 이 점이 데이터 조인을 하기 전에 (역자 주 : selection.select가 아닌)selection.selectAll을 호출해야 하는 이유다: selection.selectAll은 원래의 셀렉션의 최말단 문서요소를 새로운 enter 셀렉션의 그룹의 parentNode로 설정한다.(역자 주 : 이 부분 보완 필요-끝)
+<aside>(역자 주 : 이 문단의 후반부인 enter.select 이후의 내용은 문맥의 흐름과 맞지 않아서 차라리 무시하는 것이 enter, update, exit 셀렉션을 이해하는 데 도움이 된다.<br/>enter.select의 구현부에 대한 설명도 맞다고 보기 어려운 것이, 실제 소스를 보면 enter.select는 enter 셀렉션의 그룹의 parentNode 값과 enter 셀렉션의 그룹의 원소인 각 자리채우미의 __data__ 값을, enter.select가 반환할 새로운 셀렉션의 그룹의 parentData와 그룹의 원소의 __data__에 할당하고, 그 새로운 셀렉션을 반환할 뿐, 노드가 그룹의 부모로 삽입된다는 로직은 없다.<br/>마지막 문장 역시, enter 셀렉션에 대해 이야기하다가 왜 갑자기 그냥 selectAll도 아니고 selection.selectAll에 대해 이야기 하는 지 이해하기 어렵다.)</aside>
+
+<p>update 셀렉션과 exit 셀렉션이 보통 셀렉션이지만, enter 셀렉션은 셀렉션의 서브클래스다. enter 셀렉션은 <i>아직 존재하지도 않는</i> 문서요소를 나타내기 때문에 보통 셀렉션과는 다를 수 밖에 없다. enter 셀렉션은 DOM 문서요소가 아니라 자리채우미(placeholder)를 포함한다; 자리채우미는 <code>__data__</code> 속성만을 가지는 단순 객체다. <a href="https://github.com/mbostock/d3/blob/master/src/selection/enter-select.js">enter.select</a>은 노드가 자리채우미를 대체하면서 그룹의 부모로 삽입되도록 특별하게 구현되어 있다. 바로 이 점이 데이터 조인을 하기 전에 selection.selectAll을 호출해야 하는 이유다: selection.selectAll은 새로운 enter 셀렉션의 parentNode를 정확하게 설정한다.
 
 <h2><a href="#enter-update" name="enter-update">#</a>Enter와 Update 합치기</h2>
 
 <p class='d3-en'>The <a href="http://bl.ocks.org/mbostock/3808218">general update pattern</a> with a data join appends entering elements and removes exiting elements, while modifying dynamic attributes, styles and other properties of updating elements. Often, there’s overlap between properties of updating and entering elements.</p>
 
-<p>데이터가 조인된 <a href="http://bl.ocks.org/mbostock/3808218">update 일반 패턴</a>은 update 셀렉션에 있는 문서요소의 속성, 스타일 등을 수정하는 동안, enter 셀렉션에 있는 문서요소를 추가하고, exit 셀렉션에 있는 문서요소를 제거한다. update 셀렉션에 있는 문서요소의 속성과 entering 셀렉션에 있는 문서요소의 속성이 겹치는 경우도 발생할 수 있다.
+<p>데이터 조인에 관한 <a href="http://bl.ocks.org/mbostock/3808218">update 일반 패턴</a>은 update 셀렉션에 있는 문서요소의 속성, 스타일 등을 수정하고, enter 셀렉션에 있는 문서요소를 추가하고, exit 셀렉션에 있는 문서요소를 제거한다. update 셀렉션에 있는 문서요소의 속성과 entering 셀렉션에 있는 문서요소의 속성이 겹치는 경우도 발생할 수 있다.
 
 <p class='d3-en'>To reduce duplicate code, enter.append has a convenient side-effect: it replaces null elements in the update selection with the newly-created elements from the enter selection. Thus, after enter.append, the update selection is modified to contain both entering and updating elements. The update selection subsequently contains all currently-displayed elements:</p>
 
