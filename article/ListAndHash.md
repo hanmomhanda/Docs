@@ -1,6 +1,6 @@
-> 원문 : http://martinfowler.com/bliki/ListAndHash.html
-> 번역 : 오명운(hanmomhanda@gmail.com)
-> 한줄요약 : ListAndHash라는 자료구조를 만들자.
+> - 원문 : http://martinfowler.com/bliki/ListAndHash.html
+> - 번역 : 오명운(hanmomhanda@gmail.com)
+> - 한줄요약 : ListAndHash라는 자료구조를 만들자.
 
 # ListAndHash(리스트이자 해쉬인 자료 구조)
 
