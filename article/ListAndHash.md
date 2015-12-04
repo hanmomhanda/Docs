@@ -1,4 +1,4 @@
-> - 원문 : Martin Fowler - <a href='http://martinfowler.com/bliki/ListAndHash.html'  target='_blank'>http://martinfowler.com/bliki/ListAndHash.html</a>
+> - 원문 : Martin Fowler - http://martinfowler.com/bliki/ListAndHash.html
 > - 번역 : 오명운(hanmomhanda@gmail.com)
 > - 한줄요약 : ListAndHash라는 자료구조를 만들자.
 
