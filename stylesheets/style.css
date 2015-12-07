@@ -1,0 +1,29 @@
+.slider {
+    /*overflow-y: scroll;*/
+    /* complete liquid height based on the parent's height!! */
+    height:100%;
+
+    /* only transition on transform properties which are hardware accelerated = way better performances */
+    -webkit-transition:-webkit-transform .1s ease, font-size .1s linear;
+       -moz-transition:   -moz-transform .1s ease, font-size .1s linear;
+        -ms-transition:    -ms-transform .1s ease, font-size .1s linear;
+            transition:        transform .1s ease, font-size .1s linear;
+}
+
+.slider.opened {
+    /* visible */
+    -webkit-transform: translate(0, 0%);
+       -moz-transform: translate(0, 0%);
+        -ms-transform: translate(0, 0%);
+            transform: translate(0, 0%);
+    font-size: 1.0em;
+}
+.slider.closed {
+    /* completely offscreen */
+    -webkit-transform: translate(0, -100%);
+       -moz-transform: translate(0, -100%);
+        -ms-transform: translate(0, -100%);
+            transform: translate(0, -100%);
+    font-size: 0.0em;
+    /*display:none;*/
+}
