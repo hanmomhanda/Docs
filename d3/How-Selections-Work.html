@@ -871,7 +871,7 @@ tree(
 
 <h2><a href="#group" name="group">#</a>문서요소 그룹핑</h2>
 
-<aside>(역자 주: 이후로 나오는 <strong>group 배열</strong>이라는 용어는 <strong>group의 배열을 의미하는 것이 아니라 group 자체가 배열이라는 의미로 사용</strong>한다.)</aside>
+<aside>(역자 주: 이후로 나오는 <strong>group 배열</strong>이라는 용어는 <strong>group의 배열을 의미하는 것이 아니라 group 자체가 배열이라는 의미로 사용</strong>한다. group 배열의 원소는 선택된 문서요소들이다)</aside>
 
 <p class='d3-en'>Another reason selections aren’t literally arrays of elements is that they are <i>arrays of arrays</i> of elements: a selection is an array of groups, and each group is an array of elements. For example, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> returns a selection with one group containing the selected element:</p>
 
@@ -1062,9 +1062,11 @@ selectAllAnimation(
 
 <h2><a href="#non-grouping" name="non-grouping">#</a>그룹핑을 변경하지 않는 메서드들</h2>
 
+<aside>(역자 주 : group 배열은 셀렉션의 최말단 문서요소를 원소로 하는 배열을 말하며, 이 글에서 <strong>그룹핑은 group 배열의 원소 개수와 group 배열의 parentNode 속성을 말한다</strong>)</aside>
+
 <p class='d3-en'>Only selectAll has special behavior regarding grouping; <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a> preserves the existing grouping. The select method differs because there is exactly one element in the new selection for each element in the old selection. Thus, select also propagates data from parent to child, whereas selectAll does not (hence the need for a data-join)!</p>
 
-<p>그룹핑(역자 주 : group 배열은 셀렉션의 최말단 문서요소를 원소로 하는 배열을 말하며, 이 글에서 그룹핑은 group 배열의 원소 개수와 group 배열의 parentNode 속성을 말한다)에 관해서는 selectAll만 특이하게 동작한다(역자 주 : selectAll만 원래의 셀렉션에 있는 group 배열의 parentNode 속성을 변경한다); <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a>는 원래의 셀렉션에 있는 그룹핑을 변경하지 않고 그대로 보존한다. select 메서드는 원래의 셀렉션의 최말단 문서요소 각각에 대해 단 하나씩의 문서요소만을 원소로 취하는 단 하나의 group 배열을 반환하기 때문에 selectAll과 다르게 동작한다. select는 원래 셀렉션의 데이터를 새로운 셀렉션에 물려주지만, selectAll은 물려주지 않는다(그래서 데이터-조인이 필요하다!).
+<p><strong>그룹핑</strong>에 관해서는 selectAll만 특이하게 동작한다(역자 주 : selectAll만 원래의 셀렉션에 있는 group 배열의 parentNode 속성을 변경한다); <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a>는 원래의 셀렉션에 있는 그룹핑을 변경하지 않고 그대로 보존한다. select 메서드는 원래의 셀렉션의 최말단 문서요소 각각에 대해 단 하나씩의 문서요소만을 원소로 취하는 단 하나의 group 배열을 반환하기 때문에 selectAll과 다르게 동작한다. select는 원래 셀렉션의 데이터를 새로운 셀렉션에 물려주지만, selectAll은 물려주지 않는다(그래서 데이터-조인이 필요하다!).
 
 <p class='d3-en'>The <a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> and <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> methods are wrappers on top of select, so they also preserve grouping and propagate data. For example, given a document with four sections:</p>
 
@@ -1122,7 +1124,7 @@ tree(
 
 <p class='d3-en'>Null elements can occur when selection.select cannot find a matching element for the given selector. The select method must preserve the grouping structure, so it fills the missing slots with null. For example, if only the last two sections have asides:</p>
 
-<p>null 문서요소는 selection.select 메서드가 해당 셀렉터에 매칭되는 문서요소를 찾을 수 없을 때 발생할 수 있다. select 메서드는 그룹핑 구조를 그대로 보존해야 하므로, 매칭되는 짝이 없는 곳은 null로 채운다. 예를 들어, 앞의 예제에서 4개의 section 중에서 두 개만 asice 를 가지고 있다면:
+<p>null 문서요소는 selection.select 메서드가 해당 셀렉터에 매칭되는 문서요소를 찾을 수 없을 때 발생할 수 있다. select 메서드는 그룹핑 구조를 그대로 보존해야 하므로, 매칭되는 짝이 없는 곳은 null로 채운다. 예를 들어, 앞의 예제에서 4개의 section 중에서 두 개만 aside 를 가지고 있다면:
 
 <pre><code>d3.selectAll("section").select("aside");</code></pre>
 
@@ -1200,7 +1202,7 @@ tree(
 
 <p class='d3-en'>The D3-idiomatic equivalent is to select the body and call datum:</p>
 
-<p>앞의 직접 데이터 할당과 동일한 D3의 구문은, body를 셀렉트 하고, call을 호출하는 것이다:
+<p>앞의 직접 데이터 할당과 동일한 D3의 구문은, body를 셀렉트 하고, datum을 호출하는 것이다:
 
 <pre><code>d3.select("body").datum(42);</code></pre>
 
@@ -1248,13 +1250,13 @@ tree(
 
 <p class='d3-en'>Data in D3 can be any array of values. For example, an array of numbers:</p>
 
-<p>D3에서 데이터란 숫자의 배열처럼, 값의 배열일 수 있다.
+<p>D3에서는 숫자의 배열처럼, 값을 가진 모든 배열이 D3의 데이터가 될 수 있다.
 
 <pre><code>var numbers = [4, 5, 18, 23, 42];</code></pre>
 
 <p class='d3-en'>Or an array of objects:</p>
 
-<p>또는 객체의 배열일 수 있으며:
+<p>D3의 데이터는 객체의 배열일 수 있으며:
 
 <aside><a href="http://alignedleft.com">Scott Murray</a>의 많은 튜토리얼 중의 하나가 D3에서 사용하는 <a href="http://alignedleft.com/tutorials/d3/data-types/">일반적인 데이터 타입</a>에 대해 자바스크립트로 설명하고 있다.</aside>
 
@@ -1307,7 +1309,7 @@ tree(
 
 <p>하지만 다른 selection 메서드와 달리, <b>selection.data는 데이터를 문서요소 단위로 정의하지 않고 group 배열 단위로 정의한다</b>: 데이터는 group 배열에 상응하는 배열로 표현되거나, 그런 배열을 반환하는 함수로 표현된다. 결국 셀렉션의 <a href="#group">group 배열</a>은 그에 상응하는 <strong>데이터 배열</strong>을 갖게 된다.
 
-<aside>셀렉션은 group 배열 4개를 원소로 하는 배열이므로, data 함수는 4번 호출되고, 4개의 배열을 반환(한 번 호출 될 때마다 배열 하나씩 반환)한다. 반환된 각 배열은 여기서는 우연히 4개의 값을 갖고 있지만, 반환된 배열은 데이터에 따라 그 길이가 다를 수도 있다.(역자 주 : 원문에는 각 array가 4개 씩의 데이터를 가지도록 그림이 그려져 있으나, 여기서 설명한대로 각 array는 그 길이가 다를 수도 있으므로, array마다 길이가 같다는 오해가 생기지 않도록 원문의 그림을 수정했다)</aside>
+<aside>셀렉션은 group 배열 4개를 원소로 하는 배열이므로, data 함수는 4번 호출되고, 4개의 배열을 반환(한 번 호출 될 때마다 배열 하나씩 반환)한다. 반환된 각 배열은 여기서는 우연히 4개의 값을 원소로 갖고 있지만, 반환된 배열은 데이터에 따라 그 길이가 다를 수도 있다.(역자 주 : 원문에는 각 array가 모두 4개 씩의 데이터를 가지도록 그림이 그려져 있으나, 여기서 설명한대로 각 array는 그 길이가 서로 다를 수도 있으므로, array마다 길이가 같다는 오해가 생기지 않도록 원문의 그림을 수정했다)</aside>
 
 <script>
 
