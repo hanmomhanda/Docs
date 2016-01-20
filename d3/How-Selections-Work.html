@@ -871,9 +871,11 @@ tree(
 
 <h2><a href="#group" name="group">#</a>문서요소 그룹핑</h2>
 
+<aside>(역자 주: 이후로 나오는 <strong>group 배열</strong>이라는 용어는 <strong>group의 배열을 의미하는 것이 아니라 group 자체가 배열이라는 의미로 사용</strong>한다.)</aside>
+
 <p class='d3-en'>Another reason selections aren’t literally arrays of elements is that they are <i>arrays of arrays</i> of elements: a selection is an array of groups, and each group is an array of elements. For example, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> returns a selection with one group containing the selected element:</p>
 
-<p>셀렉션이 문서요소의 배열이라는 말이 틀린 또 하나의 이유는, 셀렉션은 문서요소의 배열이 아니라 문서요소의 배열의 배열이라는 점이다: 셀렉션은 group의 배열인데, 각 group은 문서요소의 배열이다. 예를 들어, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> 는 선택된 문서요소를 원소로 하는 한 개의 group 배열(역자주: 이후로 나오는 <strong>group 배열</strong>이라는 용어는 group의 배열을 의미하는 것이 아니라 <strong>group 자체가 배열이라는 의미로 사용</strong>한다.)을 원소로 하는 배열을 반환한다:
+<p>셀렉션이 문서요소의 배열이라는 말이 틀린 또 하나의 이유는, 셀렉션은 문서요소의 배열이 아니라 문서요소의 배열의 배열이라는 점이다: 셀렉션은 group의 배열인데, 각 group은 문서요소의 배열이다. 예를 들어, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> 는 선택된 문서요소를 원소로 하는 한 개의 <strong>group 배열</strong>을 원소로 하는 배열을 반환한다:
 
 <pre><code>var selection = d3.select("body");</code></pre>
 
@@ -902,7 +904,7 @@ tree(
 
 <pre><code>d3.selectAll("h2");</code></pre>
 
-<aside>셀렉션은 배열의 서브클래스이지만, group은 그냥 일반 배열이다.</aside>
+<aside>셀렉션은 배열의 서브클래스이지만, group 배열은 그냥 일반 배열이다.</aside>
 
 <script>
 
@@ -1299,9 +1301,11 @@ tree(
 
 <p>selection.style이 셀렉트 된 모든 문서요소에 단일 스타일 속성을 정의하기 위해 문자열 상수(<i>예를 들면</i>, <code>"red"</code>)를 사용하거나, 문서요소 별로 동적인 스타일을 계산하기 위해 함수(<code>function(d) { return d.color; }</code>)를 사용하는 것과 마찬가지로, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>도 상수값이나 함수를 인자로 사용할 수 있다.
 
+<aside>(역자 주: <strong>데이터 배열</strong>은 group 배열과 달리 <strong>데이터의 배열을 의미</strong>한다. 아래 그림에서 array로 표시된 것들이 0, 1, 2, ...라는 데이터의 배열인 데이터 배열이다)</aside>
+
 <p class='d3-en'>However, unlike the other selection methods, <b>selection.data defines data per-group rather than per-element</b>: data is expressed as an array of values for the group, or a function that returns such an array. Thus, a <a href="#group">grouped</a> selection has correspondingly grouped data!</p>
 
-<p>하지만 다른 selection 메서드와 달리, <b>selection.data는 데이터를 문서요소 단위로 정의하지 않고 group 배열 단위로 정의한다</b>: 데이터는 group 배열에 상응하는 배열로 표현되거나, 그런 배열을 반환하는 함수로 표현된다. 결국 셀렉션의 <a href="#group">group 배열</a>은 그에 상응하는 데이터 배열(역자 주: 데이터 배열은 group 배열과 달리 데이터의 배열을 의미한다. 아래 그림에서 0, 1, 2, ...를 데이터라 하면, array로 표시된 것들이 바로 데이터 배열이 된다)을 갖게 된다.
+<p>하지만 다른 selection 메서드와 달리, <b>selection.data는 데이터를 문서요소 단위로 정의하지 않고 group 배열 단위로 정의한다</b>: 데이터는 group 배열에 상응하는 배열로 표현되거나, 그런 배열을 반환하는 함수로 표현된다. 결국 셀렉션의 <a href="#group">group 배열</a>은 그에 상응하는 <strong>데이터 배열</strong>을 갖게 된다.
 
 <aside>셀렉션은 group 배열 4개를 원소로 하는 배열이므로, data 함수는 4번 호출되고, 4개의 배열을 반환(한 번 호출 될 때마다 배열 하나씩 반환)한다. 반환된 각 배열은 여기서는 우연히 4개의 값을 갖고 있지만, 반환된 배열은 데이터에 따라 그 길이가 다를 수도 있다.(역자 주 : 원문에는 각 array가 4개 씩의 데이터를 가지도록 그림이 그려져 있으나, 여기서 설명한대로 각 array는 그 길이가 다를 수도 있으므로, array마다 길이가 같다는 오해가 생기지 않도록 원문의 그림을 수정했다)</aside>
 
