@@ -873,7 +873,7 @@ tree(
 
 <p class='d3-en'>Another reason selections aren’t literally arrays of elements is that they are <i>arrays of arrays</i> of elements: a selection is an array of groups, and each group is an array of elements. For example, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> returns a selection with one group containing the selected element:</p>
 
-<p>셀렉션이 문서요소의 배열이라는 말이 틀린 또 하나의 이유는, 셀렉션은 문서요소의 배열이 아니라 문서요소의 배열의 배열이라는 점이다: 셀렉션은 그룹의 배열인데, 각 그룹은 문서요소의 배열이다. 예를 들어, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> 는 선택된 문서요소를 원소로 하는 한 개의 그룹을 원소로 하는 배열을 반환한다:
+<p>셀렉션이 문서요소의 배열이라는 말이 틀린 또 하나의 이유는, 셀렉션은 문서요소의 배열이 아니라 문서요소의 배열의 배열이라는 점이다: 셀렉션은 group의 배열인데, 각 group은 문서요소의 배열이다. 예를 들어, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_select">d3.select</a> 는 선택된 문서요소를 원소로 하는 한 개의 group 배열(역자주: 이후로 나오는 <strong>group 배열</strong>이라는 용어는 group의 배열을 의미하는 것이 아니라 <strong>group 자체가 배열이라는 의미로 사용</strong>한다.)을 원소로 하는 배열을 반환한다:
 
 <pre><code>var selection = d3.select("body");</code></pre>
 
@@ -894,15 +894,15 @@ tree(
 
 <p class='d3-en'>In the <a href="https://developers.google.com/chrome-developer-tools/docs/console#opening_the_console">JavaScript console</a>, try running this command and inspecting the group as <code>selection[0]</code> and the node as <code>selection[0][0]</code>. While accessing a node directly is supported by D3’s API, for reasons that will soon be apparent it is more common to use <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-node">selection.node</a>.</p>
 
-<p><a href="https://developers.google.com/chrome-developer-tools/docs/console#opening_the_console">자바스크립트 콘솔</a>에서 아래의 명령을 실행하고 <code>selection[0]</code>으로 그룹을, <code>selection[0][0]</code>으로 노드를 검사해보자. D3 API로 노드에 직접 접근할 수도 있지만, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-node">selection.node</a>를 사용하는 것이 훨씬 더 나은 이유를 곧 알게될 것이다.
+<p><a href="https://developers.google.com/chrome-developer-tools/docs/console#opening_the_console">자바스크립트 콘솔</a>에서 위의 명령을 실행하고 <code>selection[0]</code>으로 group을, <code>selection[0][0]</code>으로 노드를 검사해보자. D3 API로 노드에 직접 접근할 수도 있지만, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-node">selection.node</a>를 사용하는 것이 훨씬 더 나은 이유를 곧 알게될 것이다.
 
 <p class='d3-en'>Likewise, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_selectAll">d3.selectAll</a> returns a selection with one group and any number of elements:</p>
 
-<p>마찬가지로, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_selectAll">d3.selectAll</a>은 여러 개의 문서요소를 원소로 하는 한 개의 그룹 배열을 원소로 하는 배열을 반환한다:
+<p>마찬가지로, <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-d3_selectAll">d3.selectAll</a>은 여러 개의 문서요소를 원소로 하는 한 개의 group 배열을 원소로 하는 배열을 반환한다:
 
 <pre><code>d3.selectAll("h2");</code></pre>
 
-<aside>셀렉션은 배열의 서브클래스이지만, 그룹은 그냥 일반 배열이다.</aside>
+<aside>셀렉션은 배열의 서브클래스이지만, group은 그냥 일반 배열이다.</aside>
 
 <script>
 
@@ -922,11 +922,11 @@ tree(
 
 <p class='d3-en'>Selections returned by d3.select and d3.selectAll have exactly one group. The only way for you to obtain a selection with multiple groups is <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-selectAll">selection.selectAll</a>. For example, if you select all table rows and then select the rows’ cells, you’ll get a group of sibling cells for each row:</p>
 
-<p>d3.select나 d3.selectAll은 정확히 한 개의 그룹 배열을 반환한다. 여러 개의 그룹 배열을 반환하는 유일한 방법은 <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-selectAll">selection.selectAll</a>을 사용하는 것이다. 예를 들어, 테이블의 모든 행을 셀렉트하고, 각 행의 셀을 셀렉트하면, 각 행의 셀을 원소로 하는 여러 개의 그룹을 원소로 하는 배열을 반환 받게 된다:
+<p>d3.select나 d3.selectAll은 정확히 한 개의 group 배열을 반환한다. 여러 개의 group 배열을 반환하는 유일한 방법은 <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-selectAll">selection.selectAll</a>을 사용하는 것이다. 예를 들어, 테이블의 모든 행을 셀렉트하고, 각 행의 셀을 셀렉트하면, 각 행의 셀을 원소로 하는 여러 개의 group 배열을 원소로 하는 배열을 반환 받게 된다:
 
 <pre><code>d3.<span id="select-all-1-1">selectAll("tr")</span>.<span id="select-all-1-2">selectAll("td")</span>;</code></pre>
 
-<aside>그림에 나오는 셀렉션의 그룹은 모두 똑같이 네 개의 원소를 가지고 있지만, 일반적으로 셀렉션의 각 그룹은 각기 다른 갯수의 원소를 가질 수 있다. 뿐만아니라 그룹은 심지어 비어있을 수도 있다!(역자 주 : 원문에는 똑같이 4개 씩의 td를 가지는 4개의 tr에 대한 그림으로 설명하고 있으나, 4개의 tr과 4개의 td로 인해 잘못된 이해를 유발할 수 있어 여기 설명대로 각 그룹이 각기 다른 갯수의 원소를 가질 수 있음을 보여주기 위해 그림을 수정하였음)</aside>
+<aside>그림에 나오는 셀렉션의 group 배열은 모두 똑같이 네 개의 원소를 가지고 있지만, 일반적으로 셀렉션의 각 group 배열은 각기 다른 갯수의 원소를 가질 수 있다. 뿐만아니라 group 배열은 심지어 비어있을 수도 있다!(역자 주 : 원문에는 똑같이 4개 씩의 td를 가지는 4개의 tr에 대한 그림으로 설명하고 있으나, 4개의 tr과 4개의 td로 인해 잘못된 이해를 유발할 수 있어 여기 설명대로 각 group 배열이 각기 다른 갯수의 원소를 가질 수 있음을 보여주기 위해 그림을 수정하였음)</aside>
 
 <script>
 
@@ -981,7 +981,7 @@ selectAllAnimation(
 
 <p class='d3-en'>With selectAll, <b>every element in the old selection becomes a group in the new selection</b>; each group contains an old element’s matching descendant elements. So, if each table cell contained a <a href="https://developer.mozilla.org/en-US/docs/HTML/Element/span">span</a> element, and you called selectAll a third time, you’d get a selection with sixteen groups:</p>
 
-<p><code>selection</code>.selectAll을 쓰면, <b>selectAll 메서드를 호출하는 원래 셀렉션인 <code>selection</code>에 있던 모든 최말단 문서요소 들이 <code>selection</code>.selectAll에 의해 반환되는 새로운 셀렉션의 그룹이 된다</b>. 예를 들어, 만약 앞의 테이블 셀렉션 예제에서 각 셀이 <a href="https://developer.mozilla.org/en-US/docs/HTML/Element/span">span</a> 문서요소를 가지고 있어서, 다음과 같이 selectAll을 한 번 더 호출하면, 두 번째 selectAll의 호출 결과로 나왔던 16개의 td 가 새로운 셀렉션에서는 아래와 같이 16개의 그룹이 된다:
+<p><code>selection</code>.selectAll을 쓰면, <b>selectAll 메서드를 호출하는 원래 셀렉션인 <code>selection</code>에 있던 모든 최말단 문서요소 들이 <code>selection</code>.selectAll에 의해 반환되는 새로운 셀렉션의 group 배열이 된다</b>. 예를 들어, 만약 앞의 테이블 셀렉션 예제에서 각 셀이 <a href="https://developer.mozilla.org/en-US/docs/HTML/Element/span">span</a> 문서요소를 가지고 있어서, 다음과 같이 selectAll을 한 번 더 호출하면, 두 번째 selectAll의 호출 결과로 나왔던 16개의 td 가 새로운 셀렉션에서는 아래와 같이 16개의 group 배열이 된다:
 
 <pre><code>d3.selectAll("tr").<span id="select-all-2-1">selectAll("td")</span>.<span id="select-all-2-2">selectAll("span")</span>;</code></pre>
 
@@ -1046,15 +1046,15 @@ selectAllAnimation(
 
 </script>
 
-<aside>자바스크립트 콘솔에서 그룹의 부모 노드를 확인해보자. 이 주제에 대한 상세한 내용은 <a href="http://bost.ocks.org/mike/nest/">중첩 셀렉션</a>를 참조한다.</aside>
+<aside>자바스크립트 콘솔에서 group 배열의 부모 노드를 확인해보자. 이 주제에 대한 상세한 내용은 <a href="http://bost.ocks.org/mike/nest/">중첩 셀렉션</a>를 참조한다.</aside>
 
 <p class='d3-en'>Each group has a <code>parentNode</code> property which stores the shared parent of all the group’s elements. The parent node is set when the group is created. Thus, if you call <code>d3.selectAll("tr")&#8203;.selectAll("td")</code>, the returned selection contains groups of td elements, whose parents are tr elements. For selections returned by d3.select and d3.selectAll, the parent element is the <a href="https://developer.mozilla.org/en-US/docs/DOM/document.documentElement">document element</a>.</p>
 
-<p>각 그룹은 그룹 내의 모든 원소의 공통적인 부모 노드를 저장하는 <code>parentNode</code> 속성을 가지고 있다. 부모 노드는 그룹이 생성될 때 설정된다. 그래서 <code>d3.selectAll("tr")&#8203;.selectAll("td")</code>를 호출하면 부모가 tr 인 td 문서요소들을 원소로 하는 그룹의 배열이 셀렉션으로 반환된다. d3.select 와 d3.selectAll 에 의해 반환되는 셀렉션은 <a href="https://developer.mozilla.org/en-US/docs/DOM/document.documentElement">document 요소</a>를 <code>parentNode</code> 속성으로 가지는 그룹의 배열이다.
+<p>각 group 배열은 group 배열 내의 모든 원소의 공통적인 부모 노드를 저장하는 <code>parentNode</code> 속성을 가지고 있다. 부모 노드는 group 배열이 생성될 때 설정된다. 그래서 <code>d3.selectAll("tr")&#8203;.selectAll("td")</code>를 호출하면 부모가 tr 인 td 문서요소들을 원소로 하는 group 배열의 배열이 셀렉션으로 반환된다. d3.select 와 d3.selectAll 에 의해 반환되는 셀렉션은 <a href="https://developer.mozilla.org/en-US/docs/DOM/document.documentElement">document 요소</a>를 <code>parentNode</code> 속성으로 가지는 group 배열의 배열이다.
 
 <p class='d3-en'>Most of the time, you can safely ignore that selections are grouped. When you use a function to define a selection.attr or selection.style, the function is called for each element; the main difference with grouping is that the second argument to your function (<code>i</code>) is the within-group index rather than the within-selection index.</p>
 
-<p>대부분의 경우 셀렉션이 그룹의 배열이라는 점을 인식하지 못해도 괜찮다. selection.attr 이나 selection.style 을 정의하기 위해 함수를 호출하면, 함수의 파라미터로 전달되는 내용은 셀렉션의 최말단 문서요소에 적용되기 때문이다. 그룹과 관련해 의식해야 할 것은, 함수의 두 번째 파라미터로 전달하는 (<code>i</code>)가 셀렉션 범위의 인덱스가 아니라 그룹 내에서의 인덱스라는 점이다.
+<p>대부분의 경우 셀렉션이 group 배열의 배열이라는 점을 인식하지 못해도 괜찮다. selection.attr 이나 selection.style 을 정의하기 위해 함수를 호출하면, 함수의 파라미터로 전달되는 내용은 group 배열이 아니라 원래 의도대로 셀렉션의 최말단 문서요소에 적용되기 때문이다. group 배열과 관련해 의식해야 할 것은, 함수의 두 번째 파라미터로 전달하는 (<code>i</code>)가 셀렉션 범위의 인덱스가 아니라 group 배열 내에서의 인덱스라는 점이다.
 
 <!-- The killer feature for groups is <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>, which allows you to define data per-group (rather than for the entire selection), and thus more easily create hierarchical DOM elements from hierarchical data. We’ll revisit this topic when we get to data joins. -->
 
@@ -1062,7 +1062,7 @@ selectAllAnimation(
 
 <p class='d3-en'>Only selectAll has special behavior regarding grouping; <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a> preserves the existing grouping. The select method differs because there is exactly one element in the new selection for each element in the old selection. Thus, select also propagates data from parent to child, whereas selectAll does not (hence the need for a data-join)!</p>
 
-<p>그룹핑(역자 주 : 그룹은 셀렉션의 최말단 문서요소를 원소로 하는 배열을 말하며, 이 글에서 그룹핑은 그룹 배열의 원소 개수와 그룹 배열의 parentNode 속성을 말한다)에 관해서는 selectAll만 특이하게 동작한다(역자 주 : selectAll만 원래의 셀렉션에 있는 그룹 배열의 parentNode 속성을 변경한다); <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a>는 원래의 셀렉션에 있는 그룹핑을 변경하지 않고 그대로 보존한다. select 메서드는 원래의 셀렉션의 최말단 문서요소 각각에 대해 단 하나씩의 문서요소만을 원소로 취하는 단 하나의 그룹 배열을 반환하기 때문에 selectAll과 다르게 동작한다. select는 원래 셀렉션의 데이터를 새로운 셀렉션에 물려주지만, selectAll은 물려주지 않는다(그래서 데이터-조인이 필요하다!).
+<p>그룹핑(역자 주 : group 배열은 셀렉션의 최말단 문서요소를 원소로 하는 배열을 말하며, 이 글에서 그룹핑은 group 배열의 원소 개수와 group 배열의 parentNode 속성을 말한다)에 관해서는 selectAll만 특이하게 동작한다(역자 주 : selectAll만 원래의 셀렉션에 있는 group 배열의 parentNode 속성을 변경한다); <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-select">select</a>는 원래의 셀렉션에 있는 그룹핑을 변경하지 않고 그대로 보존한다. select 메서드는 원래의 셀렉션의 최말단 문서요소 각각에 대해 단 하나씩의 문서요소만을 원소로 취하는 단 하나의 group 배열을 반환하기 때문에 selectAll과 다르게 동작한다. select는 원래 셀렉션의 데이터를 새로운 셀렉션에 물려주지만, selectAll은 물려주지 않는다(그래서 데이터-조인이 필요하다!).
 
 <p class='d3-en'>The <a href="https://github.com/mbostock/d3/blob/master/src/selection/append.js">append</a> and <a href="https://github.com/mbostock/d3/blob/master/src/selection/insert.js">insert</a> methods are wrappers on top of select, so they also preserve grouping and propagate data. For example, given a document with four sections:</p>
 
@@ -1088,7 +1088,7 @@ tree(
 
 <p class='d3-en'>If you append a paragraph element to each section, the new selection likewise has a single group with four elements:</p>
 
-<p>각 section에 paragraph를 append 하면, append 메서드가 반환하는 새로운 셀렉션은 네 개의 원소를 가지는 한 개의 그룹 배열을 갖게 된다.
+<p>각 section에 paragraph를 append 하면, append 메서드가 반환하는 새로운 셀렉션은 네 개의 원소를 가지는 한 개의 group 배열을 갖게 된다.
 
 <pre><code>d3.selectAll("section").append("p");</code></pre>
 
@@ -1110,13 +1110,13 @@ tree(
 
 <p class='d3-en'>Note that the <code>parentNode</code> for this selection is still the document element because selection.selectAll has not been called to regroup the selection.</p>
 
-<p>위에서 append 메서드가 반환하는 새로운 셀렉션에 있는 그룹의 <code>parentNode</code> 속성은 여전히 document 임을 기억하자. 셀렉션의 그룹핑을 변경하는 selection.selectAll은 호출된 적이 없기 때문이다.
+<p>위에서 append 메서드가 반환하는 새로운 셀렉션에 있는 group 배열의 <code>parentNode</code> 속성은 여전히 document 임을 기억하자. 셀렉션의 그룹핑을 변경하는 selection.selectAll은 호출된 적이 없기 때문이다.
 
 <h2><a href="#null" name="null">#</a>Null 문서요소</h2>
 
 <p class='d3-en'>Groups can contain nulls to indicate missing elements. Nulls are ignored for most operations; for example, D3 skips null elements when applying styles and attributes.</p>
 
-<p>그룹은 문서요소가 없는 상태를 나타내기 위해 null을 포함할 수 있다. null은 대부분의 처리에서 무시된다; 예를 들어, D3는 스타일이나 속성값을 적용할 때 null 문서요소는 무시하고 지나가 버린다.
+<p>group 배열은 문서요소가 없는 상태를 나타내기 위해 null을 포함할 수 있다. null은 대부분의 처리에서 무시된다; 예를 들어, D3는 스타일이나 속성값을 적용할 때 null 문서요소는 무시하고 지나가 버린다.
 
 <p class='d3-en'>Null elements can occur when selection.select cannot find a matching element for the given selector. The select method must preserve the grouping structure, so it fills the missing slots with null. For example, if only the last two sections have asides:</p>
 
@@ -1144,7 +1144,7 @@ tree(
 
 <p class='d3-en'>As with grouping, you can usually ignore null elements, but note their use in preserving the grouped structure of a selection and its within-group index.</p>
 
-<p>그룹핑에 대해서는 보통 null 문서요소를 무시할 수 있지만, 셀렉션의 그룹 구조를 보존하는 데 null 문서요소가 사용된다는 점과 그룹 내에서의 인덱스에 대해서는 기억을 해두자.
+<p>그룹핑에 대해서는 보통 null 문서요소를 무시할 수 있지만, 셀렉션의 group 배열의 구조를 보존하는 데 null 문서요소가 사용된다는 점과 group 배열 내에서의 인덱스에 대해서는 기억을 해두자.
 
 <!-- <p>Null elements are critical when handling the result of a data join, which splits a selection into three parts: <i>enter</i>, <i>update</i> and <i>exit</i>. These three selections share the original selection’s structure, with null elements in-between. -->
 
@@ -1171,7 +1171,7 @@ tree(
 
 <ul>
 
-  <li><a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>를 통해 최말단 문서요소의 그룹에 조인.</li>
+  <li><a href="https://github.com/mbostock/d3/wiki/Selections#wiki-data">selection.data</a>를 통해 최말단 문서요소를 원소로 하는 group 배열에 조인.</li>
   <li><a href="https://github.com/mbostock/d3/wiki/Selections#wiki-datum">selection.datum</a>를 통해 개별 최말단 문서요소에 직접 할당.</li>
   <li>append, insert, or select 메서드를 통해 원래의 셀렉션으로부터 상속.</li>
 
@@ -1301,9 +1301,9 @@ tree(
 
 <p class='d3-en'>However, unlike the other selection methods, <b>selection.data defines data per-group rather than per-element</b>: data is expressed as an array of values for the group, or a function that returns such an array. Thus, a <a href="#group">grouped</a> selection has correspondingly grouped data!</p>
 
-<p>하지만 다른 selection 메서드와 달리, <b>selection.data는 데이터를 문서요소 단위로 정의하지 않고 그룹 단위로 정의한다</b>: 데이터는 그룹에 대한 배열로 표현되거나, 그런 배열을 반환하는 함수로 표현된다. 그래서 <a href="#group">그룹</a> 셀렉션은 그에 상응하는 그룹 데이터를 갖게 된다.
+<p>하지만 다른 selection 메서드와 달리, <b>selection.data는 데이터를 문서요소 단위로 정의하지 않고 group 배열 단위로 정의한다</b>: 데이터는 group 배열에 상응하는 배열로 표현되거나, 그런 배열을 반환하는 함수로 표현된다. 결국 셀렉션의 <a href="#group">group 배열</a>은 그에 상응하는 데이터 배열(역자 주: 데이터 배열은 group 배열과 달리 데이터의 배열을 의미한다. 아래 그림에서 0, 1, 2, ...를 데이터라 하면, array로 표시된 것들이 바로 데이터 배열이 된다)을 갖게 된다.
 
-<aside>셀렉션에 4개의 그룹이 있으므로, data 함수는 4번 호출되고, 4개의 배열(각 호출마다 하나씩)을 반환한다. 반환된 각 배열은 여기서는 우연히 4개의 값을 갖고 있지만, 반환된 배열은 데이터에 따라 그 길이는 다를 수도 있다.(역자 주 : 원문에는 각 array가 4개 씩의 데이터를 가지도록 그림이 그려져 있으나, 여기서 설명한대로 각 array는 그 길이가 다를 수도 있으므로, array마다 길이가 같다는 오해가 생기지 않도록 원문의 그림을 수정했다)</aside>
+<aside>셀렉션은 group 배열 4개를 원소로 하는 배열이므로, data 함수는 4번 호출되고, 4개의 배열을 반환(한 번 호출 될 때마다 배열 하나씩 반환)한다. 반환된 각 배열은 여기서는 우연히 4개의 값을 갖고 있지만, 반환된 배열은 데이터에 따라 그 길이가 다를 수도 있다.(역자 주 : 원문에는 각 array가 4개 씩의 데이터를 가지도록 그림이 그려져 있으나, 여기서 설명한대로 각 array는 그 길이가 다를 수도 있으므로, array마다 길이가 같다는 오해가 생기지 않도록 원문의 그림을 수정했다)</aside>
 
 <script>
 
@@ -1342,15 +1342,15 @@ tree(
 
 <p class='d3-en'>The blue lines in the diagram indicate that the <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="data"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">data</text></g></svg></span> function <i>returns</i> the linked array. Your data function is passed the datum of the group’s <code>parentNode</code> (<code>d</code>) and the group’s index (<code>i</code>), and returns whatever array of data you want to join to that group. Thus, data is typically expressed as a function of parent data, facilitating the creation of hierarchical DOM elements from hierarchical data.</p>
 
-<p>다이어그램에서 파란선은 <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="data"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">data</text></g></svg></span> 함수가 연결 배열(linked array)을 <i>반환</i>하는 것을 보여주고 있다. data 함수(역자 주 : selection.data 함수가 아니라 바인딩 할 데이터를 반환하는 함수. 즉, selection.data의 인자로 전달되는 함수)는 그룹의 <code>parentNode</code>의 데이터(<code>d</code>)와 그룹의 인덱스(<code>i</code>)를 인수로 전달 받아서, 그 그룹에 조인하고자 하는 데이터 배열을 반환한다. 따라서, 데이터는 부모 노드 데이터의 함수로 표현되어, 계층적인 데이터로부터 계층적인 DOM 문서요소를 쉽게 생성할 수 있다.
+<p>다이어그램에서 파란선은 <span style="display:inline-block;position:relative;width:55px;"><svg style="position:absolute;top:-17px;" class="node" width="55" height="22"><g transform="translate(1,1)" class="data"><rect rx="6" ry="6" width="53" height="20"/><text x="26" y="10" dy=".35em" text-anchor="middle">data</text></g></svg></span> 함수가 연결 배열(linked array)을 <i>반환</i>하는 것을 보여주고 있다. data 함수(역자 주 : selection.data 함수가 아니라 바인딩 할 데이터를 반환하는 함수. 즉, selection.data의 인자로 전달되는 함수)는 group 배열의 <code>parentNode</code>의 데이터(<code>d</code>)와 group 배열의 인덱스(<code>i</code>)를 인수로 전달 받아서, 그 group 배열에 조인하고자 하는 데이터 배열을 반환한다. 따라서, 데이터는 부모 노드 데이터의 함수로 표현되어, 계층적인 데이터로부터 계층적인 DOM 문서요소를 쉽게 생성할 수 있다.
 
 <p class='d3-en'>For selections with only a single group, you can pass the corresponding single array to selection.data directly; you only need a function when binding different data to different groups.</p>
 
-<p>단 하나의 그룹을 가지는 셀렉션에 대해서는, 그에 상응하는 한 개의 배열을 selection.data에 직접 전달할 수도 있다; 각기 다른 데이터를 각기 다른 그룹에 바인딩 할 때만 함수가 필요하다.
+<p>단 하나의 group 배열을 가지는 셀렉션에 대해서는, 그에 상응하는 한 개의 배열을 selection.data에 직접 전달할 수도 있다; 각기 다른 데이터를 각기 다른 group 배열에 바인딩 할 때만 함수가 필요하다.
 
 <h2><a href="#key" name="key">#</a>깨우침을 향한 열쇠</h2>
 
-<aside>(역자 주 : D3에서의 데이터 바인딩은 어떤 데이터를 문서요소의 __data__ 속성에 값으로 할당하는 것을 의미하며 기본적으로 값:값의 관계다.<br/>이에 반해 데이터 조인은, 데이터 배열을 셀렉션의 그룹 배열에 어떤 규칙을 가지고 접목하는 것으로 호스트 코드 상에서는 배열:배열의 관계다.<br/>데이터 조인은 데이터 바인딩의 한 방식이며, 데이터 조인을 하면 결과적으로 데이터 바인딩이 실행된다.)</aside>
+<aside>(역자 주 : D3에서의 데이터 바인딩은 어떤 데이터를 문서요소의 __data__ 속성에 값으로 할당하는 것을 의미하며 기본적으로 값:값의 관계다.<br/>이에 반해 데이터 조인은, 데이터 배열을 셀렉션의 group 배열에 어떤 규칙을 가지고 접목하는 것으로 호스트 코드 상에서는 배열:배열의 관계다.<br/>데이터 조인은 데이터 바인딩의 한 방식이며, 데이터 조인을 하면 결과적으로 데이터 바인딩이 실행된다.)</aside>
 
 <p class='d3-en'>To join data to elements, we must know which datum should be assigned to which element. This is done by pairing keys. A <i>key</i> is simply an identifying string, such as a name; when the key for a datum and an element are equal, the datum is assigned to that element.</p>
 
@@ -1484,7 +1484,7 @@ tree(
 
 <p class='d3-en'>This process can be quite complicated for large grouped selections, but is simplified somewhat because <b>each group is joined independently</b>. Thus, you only need to worry about unique keys within a group, not across the entire selection.</p>
 
-<p>이런 절차는 대규모의 그룹이 포함된 셀렉션에서는 매우 복잡하게 진행되지만, <b>각 그룹 단위로 독립적으로 조인</b>되기 때문에 단순하게 볼 수도 있다. 그래서 키는 전체 셀렉션 내에서 유일할 필요가 없으며, 그룹 내에서만 유일성이 보장 되면 된다.
+<p>이런 절차는 대규모의 group 배열이 포함된 셀렉션에서는 매우 복잡하게 진행되지만, <b>각 group 배열 단위로 독립적으로 조인</b>되기 때문에 단순하게 볼 수도 있다. 그래서 키는 전체 셀렉션 내에서 유일할 필요가 없으며, group 배열 내에서만 유일성이 보장 되면 된다.
 
 <script>
 
@@ -1735,9 +1735,9 @@ enterAnimation(
 
 <p class='d3-en'>While update and exit are normal selections, enter is a subclass of selection. This is necessary because it represents elements that <i>do not yet exist</i>. An enter selection contains placeholders rather than DOM elements; these placeholders are simply objects with a <code>__data__</code> property. The implementation of <a href="https://github.com/mbostock/d3/blob/master/src/selection/enter-select.js">enter.select</a> is then specialized such that nodes are inserted into the group’s parent, replacing the placeholder. This is why it is critical to call selection.selectAll prior to a data join: it establishes the parent node for entering elements.</p>
 
-<aside>(역자 주 : 이 문단의 후반부인 enter.select 이후의 내용은 문맥의 흐름과 맞지 않아서 차라리 무시하는 것이 enter, update, exit 셀렉션을 이해하는 데 도움이 된다.<br/>enter.select의 구현부에 대한 설명도 맞다고 보기 어려운 것이, 실제 소스를 보면 enter.select는 enter 셀렉션의 그룹의 parentNode 값과 enter 셀렉션의 그룹의 원소인 각 자리채우미의 __data__ 값을, enter.select가 반환할 새로운 셀렉션의 그룹의 parentData와 그룹의 원소의 __data__에 할당하고, 그 새로운 셀렉션을 반환할 뿐, 노드가 그룹의 부모로 삽입된다는 로직은 없다.<br/>마지막 문장 역시, enter 셀렉션에 대해 이야기하다가 왜 갑자기 그냥 selectAll도 아니고 selection.selectAll에 대해 이야기 하는 지 이해하기 어렵다.)</aside>
+<aside>(역자 주 : 이 문단의 후반부인 enter.select 이후의 내용은 문맥의 흐름과 맞지 않아서 차라리 무시하는 것이 enter, update, exit 셀렉션을 이해하는 데 도움이 된다.<br/>enter.select의 구현부에 대한 설명도 맞다고 보기 어려운 것이, 실제 소스를 보면 enter.select는 enter 셀렉션의 group 배열의 parentNode 값과 enter 셀렉션의 group 배열의 원소인 각 자리채우미의 __data__ 값을, enter.select가 반환할 새로운 셀렉션의 group 배열의 parentData와 group 배열의 원소의 __data__에 할당하고, 그 새로운 셀렉션을 반환할 뿐, 노드가 group 배열의 부모로 삽입된다는 로직은 없다.<br/>마지막 문장 역시, enter 셀렉션에 대해 이야기하다가 왜 갑자기 그냥 selectAll도 아니고 selection.selectAll에 대해 이야기 하는 지 이해하기 어렵다.)</aside>
 
-<p>update 셀렉션과 exit 셀렉션이 보통 셀렉션이지만, enter 셀렉션은 셀렉션의 서브클래스다. enter 셀렉션은 <i>아직 존재하지도 않는</i> 문서요소를 나타내기 때문에 보통 셀렉션과는 다를 수 밖에 없다. enter 셀렉션은 DOM 문서요소가 아니라 자리채우미(placeholder)를 포함한다; 자리채우미는 <code>__data__</code> 속성만을 가지는 단순 객체다. <a href="https://github.com/mbostock/d3/blob/master/src/selection/enter-select.js">enter.select</a>은 노드가 자리채우미를 대체하면서 그룹의 부모로 삽입되도록 특별하게 구현되어 있다. 바로 이 점이 데이터 조인을 하기 전에 selection.selectAll을 호출해야 하는 이유다: selection.selectAll은 새로운 enter 셀렉션의 parentNode를 정확하게 설정한다.
+<p>update 셀렉션과 exit 셀렉션이 보통 셀렉션이지만, enter 셀렉션은 셀렉션의 서브클래스다. enter 셀렉션은 <i>아직 존재하지도 않는</i> 문서요소를 나타내기 때문에 보통 셀렉션과는 다를 수 밖에 없다. enter 셀렉션은 DOM 문서요소가 아니라 자리채우미(placeholder)를 포함한다; 자리채우미는 <code>__data__</code> 속성만을 가지는 단순 객체다. <a href="https://github.com/mbostock/d3/blob/master/src/selection/enter-select.js">enter.select</a>은 노드가 자리채우미를 대체하면서 group 배열의 부모로 삽입되도록 특별하게 구현되어 있다. 바로 이 점이 데이터 조인을 하기 전에 selection.selectAll을 호출해야 하는 이유다: selection.selectAll은 새로운 enter 셀렉션의 parentNode를 정확하게 설정한다.
 
 <h2><a href="#enter-update" name="enter-update">#</a>Enter와 Update 합치기</h2>
 
